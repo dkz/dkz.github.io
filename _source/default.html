@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="%root_path%style.css"/>
+    <link rel="stylesheet" type="text/css" href="%root_path%css/github.min.css"/>
+    <script src="%root_path%js/highlight.min.js"></script>
+    <title>%title%</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="content">
+        %content%
+      </div>
+    </div>
+  </body>
+  <script>
+    document.querySelectorAll('pre').forEach(el => hljs.highlightElement(el));
+  </script>
+</html>
