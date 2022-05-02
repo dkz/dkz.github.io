@@ -1,0 +1,13 @@
+%template index
+
+= Useful Resources and Links =
+
+  - SEI CERT C Conding Standard: https://wiki.sei.cmu.edu/confluence/display/c
+  - The Manager's Handbook: https://themanagershandbook.com/
+  - Practical Common Lisp: https://gigamonkeys.com/book/
+  - The Common Lisp Cookbook: https://lispcookbook.github.io/cl-cookbook/
+  - Crafting Interpreters: https://craftinginterpreters.com/
+  - Tools for a Culture of Writing: https://matt.blwt.io/post/tools-for-a-culture-of-writing/
+  - How to Build Good Habits and Break Bad Ones: https://jamesclear.com/habits
+  - The Post-Incident Guide: https://www.jeli.io/howie-the-post-incident-guide/
+  - How to Write More Clearly, Think More Clearly, and Learn Complex Material More Easily: http://www.covingtoninnovations.com/mc/WriteThinkLearn.pdf

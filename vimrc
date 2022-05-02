@@ -5,7 +5,7 @@ let wiki = {
       \ 'path': path . '/_source/',
       \ 'path_html': path,
       \ 'template_path': path . '/_source/',
-      \ 'template_ext': '.html',
+      \ 'template_ext': '.template',
       \ 'template_default': 'default',
       \ 'nested_syntaxes': {'bash': 'bash', 'python': 'python', 'clojure': 'clojure', 'common-lisp': 'lisp', 'java': 'java'}
       \ }
