@@ -1,0 +1,186 @@
+= On Bash =
+
+TODO This document is mostly in an in-progress state.
+
+Collection of Bash recipes that are either too useful, too rare to be
+remembered, or require too much ceremony in arrangement, so you have to look
+them up every single time you want to reuse. Well, good news, now you don't
+need to scavenge the knowledge scattered around stackoverflow and stackexchange
+to do the job fast.
+
+== General Guidelines ==
+
+=== Naming Variables ===
+
+Variable names should always start with an underscore. Arguably, `$_variable`
+is more readable when encountered in dense code. Moreover, if all declared
+script variables start with underscore, they can be listed with `declare | grep '^_'`.
+Which will be a great starting point for troubleshooting CI scripts.
+
+=== Declaring Functions ===
+
+Name and state all script parameters in the begginning of the function. Reading
+through the function definition just to determine how to call it is a immensive
+time waste.
+
+{{{bash
+# Returns parameter value from .status file
+_read_status_file () {
+  local _file="$1"
+  local _parameter="$2"
+  sed -ne "/^$_parameter:/s/^.\+: //p" "$_file"
+}
+}}}
+
+=== Keyword Parameters ===
+
+Worth it only if script has a handful of parameters given more than half of
+them have default values. And useful rather for scripts than function
+declarations.
+
+{{{bash
+export _database_host="localhost"
+export _database_user="root"
+export _database_name="production"
+# Parse arguments, assign script variables
+_parse_arguments () {
+  local _key
+  local _value
+  while [[ $# -gt 0 ]]; do
+    _key="$1"
+    _value="$2"
+    shift
+    shift
+    case "$_key" in
+      --database-host)
+        _database_host="$_value"
+        ;;
+      --database-user)
+        _database_user="$_value"
+        ;;
+      --database-name)
+        _database_name="$_value"
+        ;;
+    esac
+  done
+}
+_parse_arguments "$@"
+}}}
+
+== Recipes ==
+
+=== Current Script Location ===
+
+Sourcing neighbor scripts or including resources is annoying because there's no
+way to specify paths relative to the location of the script being executed.
+Resort to using this Bash incantation:
+
+{{{bash
+# Returns script folder path so that .awk file can be located easily without
+# editing this script every single time script(s) folder name is different from the standard:
+_script_location="$(
+  (cd "$(dirname "$0")" >/dev/null 2>&1 && pwd -P) || echo "$HOME/scripts")"
+
+_java_oldgen_utilization () {
+  local _pid="$1"
+  jstat -gcutil "$_pid" \
+    awk -f "$SCRIPT_LOCATION/jstat.awk" -v fields=O
+}
+}}}
+
+=== Save a PID ===
+
+{{{bash
+_function () {}
+_function & (echo $! > "$_pid")
+}}}
+
+=== Avoid Repeating Tasks ===
+
+Cron script should perform pre-mortem task or attempt recovery only once:
+
+{{{bash
+_java_heapdump() {
+  local _pid="$1"
+  local _lock="$_pid.lock"
+  if [ ! -e "$_lock" ]; then
+    flock -en "$_lock" jmap -dump:format=b,file="$_pid.hprof" "$_pid"
+  fi
+}
+}}}
+
+=== Sharing Common Parameters ===
+
+Group of scripts share a bunch of keyword parameters with same defaults. For
+instance: database backup script, backups cleanup script and a script used to
+report to Zabbix agent. They all should preferably share the info regarding
+backup directory, state and lock files, and file naming patterns.
+
+Obviously, scripts should be able to define their custom parameters. This can
+be arranged:
+{{{bash
+_database_name="text"
+_backup_file_prefix="$_database_name"
+_parse_arguments () {
+  local _key
+  local _value
+  local _callback_func
+  while [[ $# -gt 0 ]]; do
+    _key="$1"
+    _value="$2"
+    shift
+    shift
+    case "$_key" in
+      --database-name)
+        _database_name="$_value"
+        ;;
+      --backup-file-prefix)
+        _backup_file_prefix="$_value"
+        ;;
+      *)
+        # To handle additional key arguments, define _parse_arguments_key_hook,
+        # which returns a function name that should store the next argument value:
+        if [ "function" = "$(LC_ALL=C type -t _parse_arguments_key_hook)" ]; then
+          # Dispatch parameter name by function names,
+          # since current shell variables cannot be assigned in the subshell:
+          _callback_func=$(_parse_arguments_key_hook "$_key")
+          if [ "function" = "$(LC_ALL=C type -t "$_callback_func")" ]; then
+            # Call dispatched key function in the current shell to modify env variables
+            "$_callback_func" "$_value"
+          else
+            echo "Key argument $_key is not recognized"
+            exit 1
+          fi
+        else
+          echo "Key argument $_key is not recognized"
+          exit 1
+        fi
+        ;;
+    esac
+  done
+}
+}}}
+
+Now, concrete script inherits every known parameter, plus can define own extra
+parameters:
+
+{{{bash
+_database_host="localhost"
+
+_parse_arguments_key_hook () {
+  case "$1" in
+    --database-host)
+      echo _parse_database_host
+      ;;
+  esac
+}
+
+_parse_database_host () {
+  _database_host="$1"
+}
+
+# shellcheck source=include.sh
+source "$_script_location/include.sh"
+_parse_arguments "$@"
+}}}
+
