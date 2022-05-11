@@ -1,5 +1,0 @@
-= Bash: Naming Variables =
-
-:bash:ci: Arguably, `$_variable` is clearer and more readable than
-`$variable`. An option to print shell variables is what makes the former
-superior. Especially for CI scripts: `declare | grep '^_'`.
