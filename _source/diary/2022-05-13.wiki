@@ -1,0 +1,7 @@
+Rich Hickey:
+
+    What kind of a runner can run as fast as they possibly can from the very
+    start of a race?  Right, only somebody who runs really short races.  But of
+    course, we are programmers and we are smarter than runners; apparently
+    because we know how to fix that problem.  We just fire the starting pistol
+    every hundred yards and call it a new sprint.
