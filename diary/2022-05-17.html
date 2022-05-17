@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="../style.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/github.min.css"/>
+    <script src="../js/highlight.min.js"></script>
+    <title>2022-05-17</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="content">
+        
+<div id="CL Webserver + HTML Templates"><h1 id="CL Webserver + HTML Templates" class="header"><a href="#CL Webserver + HTML Templates">CL Webserver + HTML Templates</a></h1></div>
+
+<p>
+Payment gateway APIs and secure forms do not always work from pages opened
+locally. JS reports something along the lines of "The target origin does not
+match the window's origin". You seriously need a web server even to test few
+web forms these days.
+</p>
+
+<p>
+Previous solution was based on Python3 <code>http.server</code> that has an attrocious
+API and takes about 50 LOC just to serve a page with a custom http header.
+</p>
+
+<div id="CL Webserver + HTML Templates-String Templates"><h2 id="String Templates" class="header"><a href="#CL Webserver + HTML Templates-String Templates">String Templates</a></h2></div>
+
+<p>
+Trivial templating can be implement with litle to no problem. From time to
+time form has to be supplied with public API key or http session identifier.
+Sadly Common Lisp lacks out-of-the-box option to process string templates.
+</p>
+
+<pre common-lisp>
+(defparameter *keyword-pattern* (ppcre:create-scanner "{{(.*?)}}"))
+(defun process-template-string (str parameters-alist)
+  (ppcre:regex-replace-all *keyword-pattern* str
+                           #'(lambda (match &amp;rest groups)
+                               (cdr (find (first groups) parameters-alist :key 'car :test 'equal)))
+                           :simple-calls t))
+</pre>
+
+<p>
+Same thing with files:
+</p>
+
+<pre common-lisp>
+(defun process-template-file (filename parameters-alist)
+  (with-output-to-string (output)
+    (with-open-file (input filename)
+      (loop for line = (read-line input nil)
+            while line
+            do (format output "~a~%" (process-template-string line parameters-alist))))))
+</pre>
+
+<div id="CL Webserver + HTML Templates-Webserver"><h2 id="Webserver" class="header"><a href="#CL Webserver + HTML Templates-Webserver">Webserver</a></h2></div>
+
+<pre common-lisp>
+(setf hunchentoot:*dispatch-table*
+  (append
+    (list
+      (hunchentoot:create-prefix-dispatcher
+        "/"
+        #'(lambda ()
+            (process-template-file "index.html" `(("public-key" . ,*public-key*))))))
+    (last hunchentoot:*dispatch-table*)))
+
+(defvar *server* (make-instance 'hunchentoot:easy-acceptor :port 4242))
+(hunchentoot:start *server*)
+</pre>
+
+<p>
+Reference:
+</p>
+<ul>
+<li>
+<a href="https://lispcookbook.github.io/cl-cookbook/web.html">https://lispcookbook.github.io/cl-cookbook/web.html</a>
+
+<li>
+<a href="https://edicl.github.io/cl-ppcre">https://edicl.github.io/cl-ppcre</a>
+
+</ul>
+
+      </div>
+    </div>
+  </body>
+  <script>
+    document.querySelectorAll('pre').forEach(el => hljs.highlightElement(el));
+  </script>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="style.css"/>
+    <link rel="stylesheet" type="text/css" href="css/github.min.css"/>
+    <script src="js/highlight.min.js"></script>
+    <title>bash</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="content">
+        
+<div id="Bash Recipes"><h1 id="Bash Recipes" class="header"><a href="#Bash Recipes">Bash Recipes</a></h1></div>
+
+<p>
+<span class="todo">TODO</span> This document is mostly in an in-progress state.
+</p>
+
+<p>
+Collection of Bash recipes that are either too useful, too rare to be
+remembered, or require too much ceremony in arrangement, so you have to look
+them up every single time you want to reuse. Now you don't need to scavenge the
+knowledge scattered around stackoverflow and stackexchange to do the job fast.
+</p>
+
+<div id="Bash Recipes-General Guidelines"><h2 id="General Guidelines" class="header"><a href="#Bash Recipes-General Guidelines">General Guidelines</a></h2></div>
+
+<div id="Bash Recipes-General Guidelines-Naming Variables"><h3 id="Naming Variables" class="header"><a href="#Bash Recipes-General Guidelines-Naming Variables">Naming Variables</a></h3></div>
+
+<p>
+Variable names should always start with an underscore. Arguably, <code>$_variable</code>
+is more readable when encountered in dense code. Moreover, if all declared
+script variables start with underscore, they can be listed with <code>declare | grep '^_'</code>.
+Which will be a great starting point for troubleshooting CI scripts.
+</p>
+
+<div id="Bash Recipes-General Guidelines-Declaring Functions"><h3 id="Declaring Functions" class="header"><a href="#Bash Recipes-General Guidelines-Declaring Functions">Declaring Functions</a></h3></div>
+
+<p>
+Name and state all script parameters in the begginning of the function. Reading
+through the function definition just to determine how to call it is a immensive
+time waste.
+</p>
+
+<pre bash>
+# Returns parameter value from .status file
+_read_status_file () {
+  local _file="$1"
+  local _parameter="$2"
+  sed -ne "/^$_parameter:/s/^.\+: //p" "$_file"
+}
+</pre>
+
+<div id="Bash Recipes-General Guidelines-Keyword Parameters"><h3 id="Keyword Parameters" class="header"><a href="#Bash Recipes-General Guidelines-Keyword Parameters">Keyword Parameters</a></h3></div>
+
+<p>
+Worth it only if script has a handful of parameters given more than half of
+them have default values. And useful rather for scripts than function
+declarations.
+</p>
+
+<pre bash>
+export _database_host="localhost"
+export _database_user="root"
+export _database_name="production"
+# Parse arguments, assign script variables
+_parse_arguments () {
+  local _key
+  local _value
+  while [[ $# -gt 0 ]]; do
+    _key="$1"
+    _value="$2"
+    shift
+    shift
+    case "$_key" in
+      --database-host)
+        _database_host="$_value"
+        ;;
+      --database-user)
+        _database_user="$_value"
+        ;;
+      --database-name)
+        _database_name="$_value"
+        ;;
+    esac
+  done
+}
+_parse_arguments "$@"
+</pre>
+
+<div id="Bash Recipes-Recipes"><h2 id="Recipes" class="header"><a href="#Bash Recipes-Recipes">Recipes</a></h2></div>
+
+<div id="Bash Recipes-Recipes-Current Script Location"><h3 id="Current Script Location" class="header"><a href="#Bash Recipes-Recipes-Current Script Location">Current Script Location</a></h3></div>
+
+<p>
+Sourcing neighbor scripts or including resources is annoying because there's no
+way to specify paths relative to the location of the script being executed.
+Resort to using this Bash incantation:
+</p>
+
+<pre bash>
+# Returns script folder path so that .awk file can be located easily without
+# editing this script every single time script(s) folder name is different from the standard:
+_script_location="$(
+  (cd "$(dirname "$0")" &gt;/dev/null 2&gt;&amp;1 &amp;&amp; pwd -P) || echo "$HOME/scripts")"
+
+_java_oldgen_utilization () {
+  local _pid="$1"
+  jstat -gcutil "$_pid" \
+    awk -f "$_script_location/jstat.awk" -v fields=O
+}
+</pre>
+
+<div id="Bash Recipes-Recipes-Save a PID"><h3 id="Save a PID" class="header"><a href="#Bash Recipes-Recipes-Save a PID">Save a PID</a></h3></div>
+
+<pre bash>
+_function () {}
+_function &amp; (echo $! &gt; "$_pid")
+</pre>
+
+<div id="Bash Recipes-Recipes-Execute Bash Script Remotely"><h3 id="Execute Bash Script Remotely" class="header"><a href="#Bash Recipes-Recipes-Execute Bash Script Remotely">Execute Bash Script Remotely</a></h3></div>
+
+<pre bash>
+_function () {}
+
+# shellcheck disable=SC2087
+ssh "$_remote" bash &lt;&lt; EOF
+  $(declare -f _function);
+  _function
+EOF
+</pre>
+
+<div id="Bash Recipes-Recipes-Avoid Repeating Tasks"><h3 id="Avoid Repeating Tasks" class="header"><a href="#Bash Recipes-Recipes-Avoid Repeating Tasks">Avoid Repeating Tasks</a></h3></div>
+
+<p>
+Useful when cron script should perform pre-mortem task or attempt recovery only once:
+</p>
+
+<pre bash>
+_java_heapdump() {
+  local _pid="$1"
+  local _lock="$_pid.lock"
+  if [ ! -e "$_lock" ]; then
+    flock -en "$_lock" jmap -dump:format=b,file="$_pid.hprof" "$_pid"
+  fi
+}
+</pre>
+
+      </div>
+    </div>
+  </body>
+  <script>
+    document.querySelectorAll('pre').forEach(el => hljs.highlightElement(el));
+  </script>
+</html>
