@@ -1,0 +1,55 @@
+= CL Webserver + HTML Templates =
+
+Payment gateway APIs and secure forms do not always work from pages opened
+locally. JS reports something along the lines of "The target origin does not
+match the window's origin". You seriously need a web server even to test few
+web forms these days.
+
+Previous solution was based on Python3 `http.server` that has an attrocious
+API and takes about 50 LOC just to serve a page with a custom http header.
+
+== String Templates ==
+
+Trivial templating can be implement with litle to no problem. From time to
+time form has to be supplied with public API key or http session identifier.
+Sadly Common Lisp lacks out-of-the-box option to process string templates.
+
+{{{common-lisp
+(defparameter *keyword-pattern* (ppcre:create-scanner "{{(.*?)}}"))
+(defun process-template-string (str parameters-alist)
+  (ppcre:regex-replace-all *keyword-pattern* str
+                           #'(lambda (match &rest groups)
+                               (cdr (find (first groups) parameters-alist :key 'car :test 'equal)))
+                           :simple-calls t))
+}}}
+
+Same thing with files:
+
+{{{common-lisp
+(defun process-template-file (filename parameters-alist)
+  (with-output-to-string (output)
+    (with-open-file (input filename)
+      (loop for line = (read-line input nil)
+            while line
+            do (format output "~a~%" (process-template-string line parameters-alist))))))
+}}}
+
+== Webserver ==
+
+{{{common-lisp
+(setf hunchentoot:*dispatch-table*
+  (append
+    (list
+      (hunchentoot:create-prefix-dispatcher
+        "/"
+        #'(lambda ()
+            (process-template-file "index.html" `(("public-key" . ,*public-key*))))))
+    (last hunchentoot:*dispatch-table*)))
+
+(defvar *server* (make-instance 'hunchentoot:easy-acceptor :port 4242))
+(hunchentoot:start *server*)
+}}}
+
+Reference:
+  - https://lispcookbook.github.io/cl-cookbook/web.html
+  - https://edicl.github.io/cl-ppcre
