@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="../style.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/github.min.css"/>
+    <script src="../js/highlight.min.js"></script>
+    <title>2022-05-18</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="content">
+        
+<div id="Introduction to Compilers: A Quick Tour"><h1 id="Introduction to Compilers: A Quick Tour" class="header"><a href="#Introduction to Compilers: A Quick Tour">Introduction to Compilers: A Quick Tour</a></h1></div>
+<blockquote>
+In Unix-like operation systems, the preprocessor, compiler, assembler, and
+linker and historically named <code>cpp</code>, <code>cc1</code>, <code>as</code>, and <code>ld</code> respectively.
+The user-visible program <code>cc</code> simply invokes each element of the toolchain
+in order to produce the final executable.
+</blockquote>
+<blockquote>
+Determine how to invoke the preprocessor, compiler, assembler, and linker
+manually in your local computing environment. Compile a small complete
+program that computes a simple expression, and examine the output at each
+stage. Are you able to follow the flow of the program in each form?
+</blockquote>
+
+<p>
+Compiler is the only part of GNU compiler toolchain that requires effort to
+find. Shipped as a part of plethora of packages, it can be found in gcc.
+Also <code>apt-file search -x '/cc1$'</code> shows different available compilers.
+</p>
+<pre>
+$ locate -r '/cc1$'
+/usr/lib/gcc/x86_64-linux-gnu/7/cc1
+/usr/lib/gcc/x86_64-linux-gnu/9/cc1
+
+$ alias cc1=/usr/lib/gcc/x86_64-linux-gnu/9/cc1
+</pre>
+
+<p>
+How is it challenging to go through each step manually? Consider the following
+program saved to <code>main.c</code>:
+</p>
+<pre c>
+#include &lt;stdio.h&gt;
+int main()
+{
+  printf("hello\n");
+  return 0;
+}
+</pre>
+
+<p>
+Since there's an <code>#include</code> directive, preprocessor has to be used. Turns out
+both <code>cpp</code> and <code>cc1</code> are quite straightforward.
+Run <code>cpp main.c &gt; pmain.c &amp;&amp; cc1 pmain.c</code> and it generates the assembly code:
+</p>
+<pre>
+        .file   "pmain.c"
+        .text
+        .section        .rodata
+.LC0:
+        .string "hello"
+        .text
+        .globl  main
+        .type   main, @function
+main:
+.LFB0:
+        .cfi_startproc
+        pushq   %rbp
+        .cfi_def_cfa_offset 16
+        .cfi_offset 6, -16
+        movq    %rsp, %rbp
+        .cfi_def_cfa_register 6
+        leaq    .LC0(%rip), %rdi
+        call    puts@PLT
+        movl    $0, %eax
+        popq    %rbp
+        .cfi_def_cfa 7, 8
+        ret
+        .cfi_endproc
+.LFE0:
+        .size   main, .-main
+        .ident  "GCC: (Ubuntu 9.4.0-1ubuntu1~20.04.1) 9.4.0"
+        .section        .note.GNU-stack,"",@progbits
+</pre>
+
+<p>
+Assembler doesn't require any extra options: easy <code>as main.s</code>. The output
+object file can be inspected with <code>objdump -d</code> disassembler:
+</p>
+<pre>
+a.out:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 &lt;main&gt;:
+   0:   55                      push   %rbp
+   1:   48 89 e5                mov    %rsp,%rbp
+   4:   48 8d 3d 00 00 00 00    lea    0x0(%rip),%rdi        # b &lt;main+0xb&gt;
+   b:   e8 00 00 00 00          callq  10 &lt;main+0x10&gt;
+  10:   b8 00 00 00 00          mov    $0x0,%eax
+  15:   5d                      pop    %rbp
+  16:   c3                      retq
+</pre>
+
+<p>
+The only way of invoking <code>ld</code> correctly is to lookup which linker options <code>gcc</code>
+uses. For that purpose <code>gcc</code> has a <code>--verbose</code> option. In my case only the set
+of options below produces a correct executable. Without any of those either
+linking fails, <code>ld</code> produces an executable that consistently segfaults, or (if
+no dynamic linker is provided) <code>execve()</code> reports a <code>ENOENT</code>. The latter may be
+confusing: shell will print "no such file or directory" despite it being quite
+the opposite.
+</p>
+
+<pre>
+ld -o ld.out \
+  -dynamic-linker /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 \
+  /usr/lib/x86_64-linux-gnu/crt1.o \
+  /usr/lib/x86_64-linux-gnu/crti.o \
+  /usr/lib/gcc/x86_64-linux-gnu/9/crtbegin.o \
+  a.out \
+  -lc \
+  /usr/lib/gcc/x86_64-linux-gnu/9/crtend.o \
+  /usr/lib/x86_64-linux-gnu/crtn.o
+</pre>
+
+<p>
+Produced executable will work. Upon closer inspection, however, you can find
+that <code>main</code> takes less than 10 % of the actual machine code. <code>objdump -d ld.out</code>
+shows a lot of auxiliary functions.
+</p>
+
+<pre>
+0000000000401126 &lt;main&gt;:
+  401126:       55                      push   %rbp
+  401127:       48 89 e5                mov    %rsp,%rbp
+  40112a:       48 8d 3d d3 0e 00 00    lea    0xed3(%rip),%rdi        # 402004 &lt;_IO_stdin_used+0x4&gt;
+  401131:       e8 fa fe ff ff          callq  401030 &lt;puts@plt&gt;
+  401136:       b8 00 00 00 00          mov    $0x0,%eax
+  40113b:       5d                      pop    %rbp
+  40113c:       c3                      retq
+  40113d:       0f 1f 00                nopl   (%rax)
+</pre>
+
+<p>
+<code>strace ./ld.out</code> is the same as for an executable produced by gcc, however
+<code>ld.out</code> takes 4K less disk space.
+</p>
+
+<p>
+Reference:
+</p>
+
+<ul>
+<li>
+<a href="https://www3.nd.edu/~dthain/compilerbook/compilerbook.pdf">https://www3.nd.edu/~dthain/compilerbook/compilerbook.pdf</a>
+
+<li>
+<a href="https://wwwcdf.pd.infn.it/localdoc/ld.pdf">https://wwwcdf.pd.infn.it/localdoc/ld.pdf</a>
+
+</ul>
+
+      </div>
+    </div>
+  </body>
+  <script>
+    document.querySelectorAll('pre').forEach(el => hljs.highlightElement(el));
+  </script>
+</html>

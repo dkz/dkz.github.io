@@ -1,0 +1,128 @@
+= Introduction to Compilers: A Quick Tour =
+
+    In Unix-like operation systems, the preprocessor, compiler, assembler, and
+    linker and historically named `cpp`, `cc1`, `as`, and `ld` respectively.
+    The user-visible program `cc` simply invokes each element of the toolchain
+    in order to produce the final executable.
+
+    Determine how to invoke the preprocessor, compiler, assembler, and linker
+    manually in your local computing environment. Compile a small complete
+    program that computes a simple expression, and examine the output at each
+    stage. Are you able to follow the flow of the program in each form?
+
+Compiler is the only part of GNU compiler toolchain that requires effort to
+find. Shipped as a part of plethora of packages, it can be found in gcc.
+Also `apt-file search -x '/cc1$'` shows different available compilers.
+{{{
+$ locate -r '/cc1$'
+/usr/lib/gcc/x86_64-linux-gnu/7/cc1
+/usr/lib/gcc/x86_64-linux-gnu/9/cc1
+
+$ alias cc1=/usr/lib/gcc/x86_64-linux-gnu/9/cc1
+}}}
+
+How is it challenging to go through each step manually? Consider the following
+program saved to `main.c`:
+{{{c
+#include <stdio.h>
+int main()
+{
+  printf("hello\n");
+  return 0;
+}
+}}}
+
+Since there's an `#include` directive, preprocessor has to be used. Turns out
+both `cpp` and `cc1` are quite straightforward.
+Run `cpp main.c > pmain.c && cc1 pmain.c` and it generates the assembly code:
+{{{
+        .file   "pmain.c"
+        .text
+        .section        .rodata
+.LC0:
+        .string "hello"
+        .text
+        .globl  main
+        .type   main, @function
+main:
+.LFB0:
+        .cfi_startproc
+        pushq   %rbp
+        .cfi_def_cfa_offset 16
+        .cfi_offset 6, -16
+        movq    %rsp, %rbp
+        .cfi_def_cfa_register 6
+        leaq    .LC0(%rip), %rdi
+        call    puts@PLT
+        movl    $0, %eax
+        popq    %rbp
+        .cfi_def_cfa 7, 8
+        ret
+        .cfi_endproc
+.LFE0:
+        .size   main, .-main
+        .ident  "GCC: (Ubuntu 9.4.0-1ubuntu1~20.04.1) 9.4.0"
+        .section        .note.GNU-stack,"",@progbits
+}}}
+
+Assembler doesn't require any extra options: easy `as main.s`. The output
+object file can be inspected with `objdump -d` disassembler:
+{{{
+a.out:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <main>:
+   0:   55                      push   %rbp
+   1:   48 89 e5                mov    %rsp,%rbp
+   4:   48 8d 3d 00 00 00 00    lea    0x0(%rip),%rdi        # b <main+0xb>
+   b:   e8 00 00 00 00          callq  10 <main+0x10>
+  10:   b8 00 00 00 00          mov    $0x0,%eax
+  15:   5d                      pop    %rbp
+  16:   c3                      retq
+}}}
+
+The only way of invoking `ld` correctly is to lookup which linker options `gcc`
+uses. For that purpose `gcc` has a `--verbose` option. In my case only the set
+of options below produces a correct executable. Without any of those either
+linking fails, `ld` produces an executable that consistently segfaults, or (if
+no dynamic linker is provided) `execve()` reports a `ENOENT`. The latter may be
+confusing: shell will print "no such file or directory" despite it being quite
+the opposite.
+
+{{{
+ld -o ld.out \
+  -dynamic-linker /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 \
+  /usr/lib/x86_64-linux-gnu/crt1.o \
+  /usr/lib/x86_64-linux-gnu/crti.o \
+  /usr/lib/gcc/x86_64-linux-gnu/9/crtbegin.o \
+  a.out \
+  -lc \
+  /usr/lib/gcc/x86_64-linux-gnu/9/crtend.o \
+  /usr/lib/x86_64-linux-gnu/crtn.o
+}}}
+
+Produced executable will work. Upon closer inspection, however, you can find
+that `main` takes less than 10 % of the actual machine code. `objdump -d ld.out`
+shows a lot of auxiliary functions.
+
+{{{
+0000000000401126 <main>:
+  401126:       55                      push   %rbp
+  401127:       48 89 e5                mov    %rsp,%rbp
+  40112a:       48 8d 3d d3 0e 00 00    lea    0xed3(%rip),%rdi        # 402004 <_IO_stdin_used+0x4>
+  401131:       e8 fa fe ff ff          callq  401030 <puts@plt>
+  401136:       b8 00 00 00 00          mov    $0x0,%eax
+  40113b:       5d                      pop    %rbp
+  40113c:       c3                      retq
+  40113d:       0f 1f 00                nopl   (%rax)
+}}}
+
+`strace ./ld.out` is the same as for an executable produced by gcc, however
+`ld.out` takes 4K less disk space.
+
+Reference:
+
+  - https://www3.nd.edu/~dthain/compilerbook/compilerbook.pdf
+  - https://wwwcdf.pd.infn.it/localdoc/ld.pdf

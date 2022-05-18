@@ -7,7 +7,7 @@ let wiki = {
       \ 'template_path': path . '/_source/',
       \ 'template_ext': '.template',
       \ 'template_default': 'default',
-      \ 'nested_syntaxes': {'bash': 'bash', 'python': 'python', 'clojure': 'clojure', 'common-lisp': 'lisp', 'java': 'java'}
+      \ 'nested_syntaxes': {'bash': 'bash', 'python': 'python', 'clojure': 'clojure', 'common-lisp': 'lisp', 'java': 'java', 'c': 'c'}
       \ }
 
 if exists('g:vimwiki_list')
