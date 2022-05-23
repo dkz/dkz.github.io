@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="../style.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/github.min.css"/>
+    <script src="../js/highlight.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <title>2022-05-23</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="content">
+        
+<div id="Java: Optional"><h1 id="Java: Optional" class="header"><a href="#Java: Optional">Java: Optional</a></h1></div>
+<blockquote>
+Tony Hoare introduced Null references in ALGOL W back in 1965 "simply
+because it was so easy to implement", says Mr. Hoare. He talks about that
+decision considering it "my billion-dollar mistake".
+</blockquote>
+
+<p>
+Null references were a terrible idea.
+</p>
+<pre java>
+  x = f();
+  x.method();
+</pre>
+
+<p>
+If <code>f()</code> returns null reference, flow will fail. It may indicate a error,
+absence of value, an implementation mistake  — literally anything. And
+programming language has no means of communicating whether null references are
+theoretically possible.
+</p>
+
+<p>
+The code above should be fixed to avoid unexpected error:
+</p>
+<pre java>
+  x = f();
+  if (x != null) {
+    x.method();
+  }
+</pre>
+
+<p>
+But it's so easy to forget to do it every time a value has to be accessed.
+</p>
+
+<p>
+Two approaches exist to mitigate the annoyance of null references: IDE
+inspections and type system. The former insist on labeling <code>f()</code> with
+annotation indicating that nulls are possible; the latter relies on leveraging
+the type system, forcing the programmer to do the necessary check operations.
+</p>
+
+<p>
+For instance, we can turn null references into special kind of object,
+that reminds to carefully handle the return value: <code>Optional&lt;&gt;</code>:
+</p>
+<pre java>
+  Optional&lt;T&gt; x = f();
+  if (x.isPresent()) {
+    y = x.get();
+  }
+</pre>
+
+<p>
+Obviously, it makes matter even worse (i.e. more code).
+</p>
+
+<p>
+Annotations are subjectively superior way of dealing with nulls. Just slap
+<code>@Nullable</code> on top of the method and IDE will report whether a null ref check
+is not taken care of. Working with <code>Optional</code> is too bothersome and results in
+even more meaningless code.
+</p>
+
+<p>
+Although, lets introduce few intermediate operations to the mix:
+</p>
+<pre java>
+  x = f();
+  if (x != null) {
+    y = g(x);
+    if (y != null) {
+      y.method();
+    }
+  }
+</pre>
+
+<p>
+I hope it's clear where this is going. Gluing multiple operations that
+spontaneously return nulls results in a staircase of nested ifs. Basically
+unreadable. This is the moment when <code>Optional</code> adoption is favorable:
+</p>
+<pre java>
+  Optional.ofNullable(f())
+    .map(g)
+    .ifPresent(y -&gt; {
+      y.method()
+    });
+</pre>
+
+<p>
+Two last snippets are practically equivalent. <code>Optional</code> does scale well with
+adding more intermediate operations to the mix: just add one more <code>.map</code>.
+Adding additional if is clearly more painful.
+</p>
+
+<p>
+The general rule of thumb: use optional only to make a chain of multiple
+operations that possibly return nulls. It makes no sense to use <code>Optional</code>
+otherwise.
+</p>
+
+<p>
+Escaping back from <code>Optional</code> to the square one is easy:
+</p>
+<pre java>
+  x = optional.orElse(null);
+  if (x != null) {
+    x.method();
+  } else {
+    anotherAction();
+  }
+</pre>
+
+<p>
+The subjectively superior way of doing it if there's no else-branch is to call
+<code>.ifPresent()</code>:
+</p>
+<pre java>
+  optional.ifPresent(x -&gt; x.method());
+</pre>
+
+<p>
+The idea is the same: less code is better.
+</p>
+
+      </div>
+    </div>
+  </body>
+  <script>
+    document.querySelectorAll('pre').forEach(el => hljs.highlightElement(el));
+  </script>
+</html>

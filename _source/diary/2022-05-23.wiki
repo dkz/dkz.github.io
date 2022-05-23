@@ -1,0 +1,95 @@
+= Java: Optional =
+
+    Tony Hoare introduced Null references in ALGOL W back in 1965 "simply
+    because it was so easy to implement", says Mr. Hoare. He talks about that
+    decision considering it "my billion-dollar mistake".
+
+Null references were a terrible idea.
+{{{java
+  x = f();
+  x.method();
+}}}
+
+If `f()` returns null reference, flow will fail. It may indicate a error,
+absence of value, an implementation mistake  — literally anything. And
+programming language has no means of communicating whether null references are
+theoretically possible.
+
+The code above should be fixed to avoid unexpected error:
+{{{java
+  x = f();
+  if (x != null) {
+    x.method();
+  }
+}}}
+
+But it's so easy to forget to do it every time a value has to be accessed.
+
+Two approaches exist to mitigate the annoyance of null references: IDE
+inspections and type system. The former insist on labeling `f()` with
+annotation indicating that nulls are possible; the latter relies on leveraging
+the type system, forcing the programmer to do the necessary check operations.
+
+For instance, we can turn null references into special kind of object,
+that reminds to carefully handle the return value: `Optional<>`:
+{{{java
+  Optional<T> x = f();
+  if (x.isPresent()) {
+    y = x.get();
+  }
+}}}
+
+Obviously, it makes matter even worse (i.e. more code).
+
+Annotations are subjectively superior way of dealing with nulls. Just slap
+`@Nullable` on top of the method and IDE will report whether a null ref check
+is not taken care of. Working with `Optional` is too bothersome and results in
+even more meaningless code.
+
+Although, lets introduce few intermediate operations to the mix:
+{{{java
+  x = f();
+  if (x != null) {
+    y = g(x);
+    if (y != null) {
+      y.method();
+    }
+  }
+}}}
+
+I hope it's clear where this is going. Gluing multiple operations that
+spontaneously return nulls results in a staircase of nested ifs. Basically
+unreadable. This is the moment when `Optional` adoption is favorable:
+{{{java
+  Optional.ofNullable(f())
+    .map(g)
+    .ifPresent(y -> {
+      y.method()
+    });
+}}}
+
+Two last snippets are practically equivalent. `Optional` does scale well with
+adding more intermediate operations to the mix: just add one more `.map`.
+Adding additional if is clearly more painful.
+
+The general rule of thumb: use optional only to make a chain of multiple
+operations that possibly return nulls. It makes no sense to use `Optional`
+otherwise.
+
+Escaping back from `Optional` to the square one is easy:
+{{{java
+  x = optional.orElse(null);
+  if (x != null) {
+    x.method();
+  } else {
+    anotherAction();
+  }
+}}}
+
+The subjectively superior way of doing it if there's no else-branch is to call
+`.ifPresent()`:
+{{{java
+  optional.ifPresent(x -> x.method());
+}}}
+
+The idea is the same: less code is better.
