@@ -2,6 +2,7 @@
 
 = Useful Resources and Links =
 
+  - [[diary/diary|Personal diary index page]]
   - SEI CERT C Conding Standard: https://wiki.sei.cmu.edu/confluence/display/c
   - The Manager's Handbook: https://themanagershandbook.com/
   - Practical Common Lisp: https://gigamonkeys.com/book/
