@@ -1,0 +1,30 @@
+= Data-centric Design =
+
+Unix philosophy is what actually caught my eye^[1]^.
+
+Linux utilities are designed around textual data. This is what makes them
+infinitely useful: they most of the time manipulate with text entries separated
+by newlines. Data can be easily crafted, analyzed, transferred, and most
+importantly it is humanly readable. Text editor is all that is needed to
+manipulate it manually. In fact, I like the idea of using simple text formats a
+lot^[2]^.
+
+On the side note: the mechanism behind Linux piping is impressive^[3]^.
+
+Data makes it easy to break down each step of the program, test every piece in
+isolation, prove its correctness, etc. It easy to pre-record test cases just
+from real-life data: just record it to a log file.
+
+Weirdly enough, everything above can be said about Clojure^[4]^.
+
+When system deviates from this data-centric design, it requires external tools
+for assistance in reading and manipulating inputs/outputs of different parts of
+the system. Which is tedious as best.
+
+Reference:
+- ^[1]^ https://blog.john-pfeiffer.com/a-concise-summary-of-amazing-and-great-ideas/
+- ^[2]^ https://terokarvinen.com/2021/calendar-txt/
+- ^[3]^ https://mazzo.li/posts/fast-pipes.html
+- ^[4]^ Bottom Up vs Top Down Design in Clojure: https://www.youtube.com/watch?v=Tb823aqgX_0
+
+

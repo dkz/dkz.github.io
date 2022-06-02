@@ -1,10 +1,13 @@
 = Diary =
 == 2022 ==
 
+=== June ===
+  - [[2022-06-02|Data-centric Design]]
+
 === May ===
   - [[2022-05-24|Donald Knuth on Philosophy of Seeking Solutions]]
   - [[2022-05-23|Java: Optional]]
-  - [[2022-05-20]]
+  - [[2022-05-20|Dan Hammon on Writer's Block]]
   - [[2022-05-18|Introduction to Compilers: A Quick Tour]]
   - [[2022-05-17|CL Webserver + HTML Templates]]
-  - [[2022-05-13]]
+  - [[2022-05-13|Rick Hickey on Agile Development]]

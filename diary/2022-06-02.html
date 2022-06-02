@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="../style.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/github.min.css"/>
+    <script src="../js/highlight.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <title>2022-06-02</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="content">
+        
+<div id="Data-centric Design"><h1 id="Data-centric Design" class="header"><a href="#Data-centric Design">Data-centric Design</a></h1></div>
+
+<p>
+Unix philosophy is what actually caught my eye<sup><small>[1]</small></sup>.
+</p>
+
+<p>
+Linux utilities are designed around textual data. This is what makes them
+infinitely useful: they most of the time manipulate with text entries separated
+by newlines. Data can be easily crafted, analyzed, transferred, and most
+importantly it is humanly readable. Text editor is all that is needed to
+manipulate it manually. In fact, I like the idea of using simple text formats a
+lot<sup><small>[2]</small></sup>.
+</p>
+
+<p>
+On the side note: the mechanism behind Linux piping is impressive<sup><small>[3]</small></sup>.
+</p>
+
+<p>
+Data makes it easy to break down each step of the program, test every piece in
+isolation, prove its correctness, etc. It easy to pre-record test cases just
+from real-life data: just record it to a log file.
+</p>
+
+<p>
+Weirdly enough, everything above can be said about Clojure<sup><small>[4]</small></sup>.
+</p>
+
+<p>
+When system deviates from this data-centric design, it requires external tools
+for assistance in reading and manipulating inputs/outputs of different parts of
+the system. Which is tedious as best.
+</p>
+
+<p>
+Reference:
+</p>
+<ul>
+<li>
+<sup><small>[1]</small></sup> <a href="https://blog.john-pfeiffer.com/a-concise-summary-of-amazing-and-great-ideas/">https://blog.john-pfeiffer.com/a-concise-summary-of-amazing-and-great-ideas/</a>
+
+<li>
+<sup><small>[2]</small></sup> <a href="https://terokarvinen.com/2021/calendar-txt/">https://terokarvinen.com/2021/calendar-txt/</a>
+
+<li>
+<sup><small>[3]</small></sup> <a href="https://mazzo.li/posts/fast-pipes.html">https://mazzo.li/posts/fast-pipes.html</a>
+
+<li>
+<sup><small>[4]</small></sup> Bottom Up vs Top Down Design in Clojure: <a href="https://www.youtube.com/watch?v=Tb823aqgX_0">https://www.youtube.com/watch?v=Tb823aqgX_0</a>
+
+</ul>
+
+      </div>
+    </div>
+  </body>
+  <script>
+    document.querySelectorAll('pre').forEach(el => hljs.highlightElement(el));
+  </script>
+</html>

@@ -1,4 +1,4 @@
-Rich Hickey:
+= Rick Hickey on Agile Development =
 
     What kind of a runner can run as fast as they possibly can from the very
     start of a race?  Right, only somebody who runs really short races.  But of
