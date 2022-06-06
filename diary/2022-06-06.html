@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="../style.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/github.min.css"/>
+    <script src="../js/highlight.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <title>2022-06-06</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="content">
+        
+<div id="Chromium Embedded Framework"><h1 id="Chromium Embedded Framework" class="header"><a href="#Chromium Embedded Framework">Chromium Embedded Framework</a></h1></div>
+<blockquote>
+Conway's Law: The system design produced by an organization will reflect
+the organization's communication structure.
+</blockquote>
+
+<div id="Contents" class="toc"><h1 id="Contents">Contents</a></h1></div>
+<ul>
+<li>
+<a href="2022-06-06.html#Chromium Embedded Framework">Chromium Embedded Framework</a>
+
+<ul>
+<li>
+<a href="2022-06-06.html#Chromium Embedded Framework-Preface">Preface</a>
+
+<li>
+<a href="2022-06-06.html#Chromium Embedded Framework-Build">Build</a>
+
+<li>
+<a href="2022-06-06.html#Chromium Embedded Framework-Gluing it All Together">Gluing it All Together</a>
+
+<ul>
+<li>
+<a href="2022-06-06.html#Chromium Embedded Framework-Gluing it All Together-&quot;Behind the back&quot; component updates">"Behind the back" component updates</a>
+
+<li>
+<a href="2022-06-06.html#Chromium Embedded Framework-Gluing it All Together-Issues with GPU renderer">Issues with GPU renderer</a>
+
+<li>
+<a href="2022-06-06.html#Chromium Embedded Framework-Gluing it All Together-Issues with generated content loading">Issues with generated content loading</a>
+
+<li>
+<a href="2022-06-06.html#Chromium Embedded Framework-Gluing it All Together-Issues with browser initialization">Issues with browser initialization</a>
+
+<li>
+<a href="2022-06-06.html#Chromium Embedded Framework-Gluing it All Together-Issues with browser stealing focus">Issues with browser stealing focus</a>
+
+<li>
+<a href="2022-06-06.html#Chromium Embedded Framework-Gluing it All Together-Issues with JavaScript message router">Issues with JavaScript message router</a>
+
+</ul>
+<li>
+<a href="2022-06-06.html#Chromium Embedded Framework-Injecting JavaScript">Injecting JavaScript</a>
+
+<li>
+<a href="2022-06-06.html#Chromium Embedded Framework-Conclusion">Conclusion</a>
+
+</ul>
+</ul>
+
+<div id="Chromium Embedded Framework-Preface"><h2 id="Preface" class="header"><a href="#Chromium Embedded Framework-Preface">Preface</a></h2></div>
+
+<p>
+Google's reputation remains terrible for the last 6 years or so. Meaningless
+redesigns causing UIX degradation of their core products; dozen of abandonware
+products; the list goes on and on.  Allegedly, the gist of it is the
+promotion-based corporate culture<sup><small>[1]</small></sup>: no developer is motivated at refining
+products or improving user experience.
+</p>
+
+<p>
+I only can say that Google lives up to their PR disaster. The topic of this
+article, jCEF<sup><small>[2]</small></sup>, has an atrocious look: no in-depth documentation,
+non-existent versioning and release cycles, build instructions are scarce and
+don't cover how java bindings are generated. jCEF builds are identified by
+commit hash. Building jCEF feels like a Russian roulette: will it work with
+current CEF version?  Pre-built distributions maintained by <code>jcefmaven</code>
+repository are not tested, they crash on Windows and didn't work on Linux.
+</p>
+
+<p>
+What a great start.
+</p>
+
+<div id="Chromium Embedded Framework-Build"><h2 id="Build" class="header"><a href="#Chromium Embedded Framework-Build">Build</a></h2></div>
+
+<p>
+Not a surprise, after all of listed above, the first result that pops up after
+searching <code>jcef</code> is a fork maintained by JetBrains<sup><small>[3]</small></sup>. CEF version is hard
+coded in its build scripts. Building causes
+almost no issues, given arch parameter is provided for Linux builds:
+</p>
+<pre>
+$ git clone https://github.com/JetBrains/jcef.git
+$ mkdir -p jcef/jcef_build &amp;&amp; cd $_
+$ cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DPROJECT_ARCH="x86_64" ..
+$ make
+</pre>
+
+<p>
+<code>pom.xml</code> is a bonus. Getting java bindings is as simple as <code>maven package</code> and
+they can be found in maven build directory.
+</p>
+
+<p>
+The only issue encountered is that linker can't really link native libraries
+against <code>libjawt.so</code>:
+</p>
+<pre>
+$ ldd libjcef.so | grep 'not found'
+  libjawt.so =&gt; not found
+</pre>
+
+<p>
+The workaround is just supplying a carefully crafted <code>LD_LIBRARY_PATH</code>
+environment variable to a java process. In Gradle there's <code>environment()</code>.
+</p>
+<pre>
+LD_LIBRARY_PATH=/usr/lib/jvm/java-8-openjdk-amd64/lib/amd64/:jcef-bundle/
+</pre>
+
+<p>
+Building on Windows requires only an extra Python 2.7.
+</p>
+
+<div id="Chromium Embedded Framework-Gluing it All Together"><h2 id="Gluing it All Together" class="header"><a href="#Chromium Embedded Framework-Gluing it All Together">Gluing it All Together</a></h2></div>
+
+<p>
+When I wrote this article, CEF version for the fork's master branch was
+<code>98.3.34+g97a5ae6+chromium-98.0.4758.102</code>. jCEF sample repo<sup><small>[4]</small></sup> is here as a
+learning resource.
+</p>
+
+<p>
+The article follows issues I encountered while trying to build a facade on top
+of CEF API. A characteristic thing about them: they were solved by pure
+intuition. Internet has zero mentions of them. Solutions can be found neither
+on official forums, nor on the issue tracker.
+</p>
+
+<p>
+The development of Chromium moves incredibly fast. I guess majority of the list
+isn't even reproducible on the master branch, instead, the update package
+includes another absolutely random bundle of bugs and inconsistencies.
+</p>
+
+<div id="Chromium Embedded Framework-Gluing it All Together-&quot;Behind the back&quot; component updates"><h3 id="&quot;Behind the back&quot; component updates" class="header"><a href="#Chromium Embedded Framework-Gluing it All Together-&quot;Behind the back&quot; component updates">"Behind the back" component updates</a></h3></div>
+
+<p>
+Widevine DRM? Apparently it's a part of CEF and it has an auto-update
+"feature". Do I really need a digital rights management system in my web-view?
+I don't:
+</p>
+<pre java>
+public final class ChromiumEmbeddedFramework {
+  private ChromiumEmbeddedFramework() {}
+
+  private static CefApp app;
+
+  private static String[] preprocess(String[] args) {
+    ArrayList&lt;String&gt; arguments = new ArrayList&lt;&gt;(Arrays.asList(args));
+    arguments.add("--disable-component-update");
+    return arguments.toArray(new String[] {});
+  }
+
+  public static void init(String[] args) {
+    String[] arguments = preprocess(args);
+    CefApp.startup(arguments);
+
+    CefSettings settings = new CefSettings();
+    settings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_VERBOSE;
+    app = CefApp.getInstance(arguments, settings);
+  }
+}
+</pre>
+
+<div id="Chromium Embedded Framework-Gluing it All Together-Issues with GPU renderer"><h3 id="Issues with GPU renderer" class="header"><a href="#Chromium Embedded Framework-Gluing it All Together-Issues with GPU renderer">Issues with GPU renderer</a></h3></div>
+
+<p>
+Starting a sample App causes <code>ClassNotFoundException</code>, because OpenGL libraries
+aren't in the class-path: <code>jogl</code> and <code>gluegen</code>. These aren't included into
+bindings package.  They can be found in <code>third_party/</code> directory of jCEF repo.
+But as it turns out, they aren't needed.
+</p>
+
+<p>
+Closing and opening browser window multiple times causes renderer process to
+sporadically crash. Adding a java life cycle handler to the mix makes renderer
+crash the whole JVM in the process.
+</p>
+
+<p>
+The obvious non-obvious fix is to just <span id="Chromium Embedded Framework-Gluing it All Together-Issues with GPU renderer-disable the GPU renderer"></span><strong id="disable the GPU renderer">disable the GPU renderer</strong> altogether:
+</p>
+<pre java>
+  private static String[] preprocess(String[] args) {
+    ArrayList&lt;String&gt; arguments = new ArrayList&lt;&gt;(Arrays.asList(args));
+    arguments.add("--disable-component-update");
+    arguments.add("--disable-gpu");
+    arguments.add("--disable-gpu-compositing");
+    return arguments.toArray(new String[] {});
+  }
+}
+</pre>
+
+<p>
+With this simple trick, OpenGL libraries and not needed anymore. Although, in
+my case renderer continued to sporadically crash if a single client is used to
+produce multiple browsers. The reason could be behind thoughtfully undocumented
+thread policies in CEF internals. Decided to just stick with
+one-browser-per-client and one-client-per-ui-controller policy.
+</p>
+
+<div id="Chromium Embedded Framework-Gluing it All Together-Issues with generated content loading"><h3 id="Issues with generated content loading" class="header"><a href="#Chromium Embedded Framework-Gluing it All Together-Issues with generated content loading">Issues with generated content loading</a></h3></div>
+
+<p>
+Seemingly simple task of showing the HTML in the browser is not that easy with
+Chromium. The task is doable via some extra effort. Transferring data to
+browser can be arranged with resource handlers:
+</p>
+<pre java>
+private static final class DataResourceHandler extends CefResourceHandlerAdapter {
+  private final InputStream is;
+  private DataResourceHandler(String content) {
+    is = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
+  }
+  @Override
+  public boolean processRequest(CefRequest request, CefCallback callback) {
+    callback.Continue();
+    return true;
+  }
+  @Override
+  public void getResponseHeaders(
+      CefResponse response,
+      IntRef responseLength,
+      StringRef redirectUrl) {
+    response.setMimeType("text/html");
+    response.setStatus(200);
+  }
+  @Override
+  public boolean readResponse(
+      byte[] dataOut,
+      int bytesToRead,
+      IntRef bytesRead,
+      CefCallback callback) {
+    try {
+      int available = is.available();
+      if (available &gt; 0) {
+        bytesRead.set(is.read(dataOut, 0, Math.min(bytesToRead, available)));
+        return true;
+      }
+    } catch (IOException ignored) {}
+    bytesRead.set(0);
+    try {
+      is.close();
+    } catch (IOException ignored) {}
+    return false;
+  }
+}
+</pre>
+
+<p>
+Specific resource handler can be assigned to a custom scheme:
+</p>
+<pre java>
+  private static final String SCHEME_DATA = "static";
+  public static void init(String[] args) {
+    String[] arguments = preprocess(args);
+    CefApp.startup(arguments);
+    CefApp.addAppHandler(new CefAppHandlerAdapter(arguments)) {
+      @Override public void onRegisterCustomSchemes(CefSchemeRegistrar registrar) {
+        super.onRegisterCustomSchemes(registrar);
+        registrar.addCustomScheme(SCHEME_DATA,
+          false, // non-standard
+          true, // local
+          true, // isolated
+          false, // secure
+          false, // disable CORS
+          false, // can't bypass security policies
+          false); // fetch API disabled
+      }
+      @Override public void onContextInitialized() {
+        app.registerSchemeHandlerFactory(SCHEME_DATA, "", new CefSchemeHandlerFactory() {
+          @Override
+          public CefResourceHandler create(
+              CefBrowser browser,
+              CefFrame frame,
+              String scheme,
+              CefRequest request) {
+            if (SCHEME_DATA.equals(scheme)) {
+              return new DataResourceHandler("&lt;html&gt;...&lt;/html&gt;");
+            }
+            return null;
+          }
+        });
+      }
+    }
+
+    CefSettings settings = new CefSettings();
+    settings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_VERBOSE;
+    app = CefApp.getInstance(arguments, settings);
+  }
+</pre>
+
+<p>
+This custom scheme handler doesn't work on Linux, despite the fact it is almost
+a carbon copy of the jCEF sample application. CEF internals signal a
+<code>VALIDATION_ERROR_DESERIALIZATION_FAILED</code> without a hint of what went wrong.
+The error is signaled by <code>mojo</code> framework which is responsible for
+inter-process communication.
+</p>
+
+<p>
+The fix, although: stealing an existing browser schema name that is
+deprecated or abandoned, like <code>data:</code>
+</p>
+<pre>
+  private static final String SCHEME_DATA = "data";
+</pre>
+
+<p>
+Usually HTML has to be dispatched on per-component basis, so it's natural to
+define a wrapper class that helps to dispatch resource handlers.
+</p>
+<pre java>
+  private static final WeahHashMap&lt;CefBrowser, WeakReference&lt;Browser&gt;&gt; controllers =
+      new WeakHashMap&lt;&gt;();
+
+  public static synchronized Browser getBrowser() {
+    return new Browser();
+  }
+
+  public static final class Browser {
+    private final CefBrowser impl;
+    private final CefClient client;
+
+    private final AtomicReference&lt;Boolean&gt; disposed = new AtomicReference&lt;&gt;(false);
+    private final AtomicReference&lt;DataResourceHandler&gt; data = new AtomicReference();
+
+    private Browser() {
+      this.client = app.createClient();
+      this.impl = client.createBrowser("about:blank", CefRendering.DEFAULT, false);
+      controllers.put(impl, new WeakReference&lt;&gt;(this));
+    }
+
+    public void loadHTML(String html) {
+      this.data.set(new DataResourceHandler(html));
+      impl.loadURL("data:");
+    }
+
+    public void dispose() {
+      if (!disposed.getAndSet(true)) {
+        client.dispose();
+      }
+    }
+  }
+</pre>
+
+<p>
+The scheme handler then:
+</p>
+<pre java>
+app.registerSchemeHandlerFactory(SCHEME_DATA, "", new CefSchemeHandlerFactory() {
+  @Override
+  public CefResourceHandler create(
+      CefBrowser browser,
+      CefFrame frame,
+      String scheme,
+      CefRequest request) {
+    if (SCHEME_DATA.equals(scheme)) synchronized (ChromiumEmbeddedFramework.class) {
+      WeakReference&lt;Browser&gt; reference = controllers.get(browser);
+      if (reference != null) {
+        Browser controller = reference.get();
+        if (controller != null) {
+          return controller.data.getAndSet(null);
+        }
+      }
+    }
+    return null;
+  }
+});
+</pre>
+
+<div id="Chromium Embedded Framework-Gluing it All Together-Issues with browser initialization"><h3 id="Issues with browser initialization" class="header"><a href="#Chromium Embedded Framework-Gluing it All Together-Issues with browser initialization">Issues with browser initialization</a></h3></div>
+
+<p>
+A rapid discovery would be finding out that everything done to jCEF API after
+constructing a browser simply doesn't count. Because browser is not ready and
+the moment of construction: native instance isn't prepared to accept API calls
+yet. For instance, calling <code>loadHTML</code> after instantiating a browser does
+nothing.
+</p>
+
+<p>
+It is possible to determine whether native peer is ready by using a cryptic
+call to <code>CefNative.getNativeRef</code>. If peer is not ready, action can be deferred
+to the point of browser creation with life span handler:
+</p>
+<pre java>
+  public static final class Browser {
+    ...
+    private final LinkedList&lt;Runnable&gt; initializerQueue = new LinkedList&lt;&gt;();
+
+    private Browser() {
+      this.client = app.createClient();
+      this.client.addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
+        @Override public void onAfterCreated(CefBrowser browser) {
+          super.onAfterCreated(browser);
+          synchronized (Browser.this) {
+            while (!initializerQueue.isEmpty()) {
+              SwingUtilities.invokeLater(initializerQueue.poll());
+            }
+          }
+        }
+      });
+      ...
+    }
+
+    private boolean ready() {
+      if (impl instanceof CefNative) {
+        CefNative n = (CefNative) impl;
+        return n.getNativeRef("CefBrowser") != 0;
+      }
+      return false;
+    }
+
+    private synchronized void whenReady(Runnable action) {
+      if (ready()) {
+        SwingUtilities.invokeLater(action);
+      } else {
+        initializerQueue.addLast(action);
+      }
+    }
+
+    public void loadHTML(String html) {
+      whenReady(() -&gt; {
+        this.data.set(new DataResourceHandler(html));
+        impl.loadURL("data:");
+      });
+    }
+  }
+</pre>
+
+<div id="Chromium Embedded Framework-Gluing it All Together-Issues with browser stealing focus"><h3 id="Issues with browser stealing focus" class="header"><a href="#Chromium Embedded Framework-Gluing it All Together-Issues with browser stealing focus">Issues with browser stealing focus</a></h3></div>
+
+<p>
+Chromium tends to steal application focus for no apparent reason. As a result,
+UI becomes less responsive, as Chromium is somehow able to hijack application
+focus in the middle of a button click, effectively cancelling it. The
+workaround is forcing Chromium to forever forget about capturing focus:
+</p>
+
+<pre java>
+    private Browser() {
+      ...
+      client.addFocusHandler(new CefFocusHandlerAdapter() {
+        @Override
+        public boolean onSetFocus(CefBrowser browser, FocusSource source) {
+          return true;
+        }
+      });
+
+    };
+</pre>
+
+<div id="Chromium Embedded Framework-Gluing it All Together-Issues with JavaScript message router"><h3 id="Issues with JavaScript message router" class="header"><a href="#Chromium Embedded Framework-Gluing it All Together-Issues with JavaScript message router">Issues with JavaScript message router</a></h3></div>
+
+<p>
+JavaScript message router enables extra <code>window</code> functions available from the
+JavaScript VM inside the browser. The feature facilitates establishing a
+messaging protocol between JavaScript VM and a Java VM. According to sample
+application it should be as easy as declaring a message router:
+</p>
+<pre java>
+    private CefMessageRouter messaging;
+    private Browser() {
+      ...
+      messaging = CefMessageRouter.create(new CefMessageRouterHandlerAdapter() {
+        @Override
+        public boolean onQuery(
+            CefBrowser browser,
+            CefFrame frame,
+            long query,
+            String request,
+            boolean persistent,
+            CefQueryCallback callback) {
+
+          callback.success("reply");
+          return true;
+        }
+      });
+      client.addMessageRouter(messaging);
+    }
+
+    public void dispose() {
+      if (!disposed.getAndSet(true)) {
+        messaging.dispose();
+        client.dispose();
+      }
+    }
+</pre>
+
+<p>
+Except it sporadically fails. The <code>window.cefQuery</code> function becomes available
+from JavaScript, yet sometimes it just doesn't work and always yields a
+<code>Query has been canceled</code> response. If it ceases to work, no amount of extra
+handlers does the job: they are all ignored afterwards.
+</p>
+
+<p>
+The workaround for this issue is to assign message router after the browser was
+created. It goes against recommendation to register routers before creating
+a browser, which I found on their forums.
+</p>
+<pre java>
+    private Browser() {
+      ...
+      client.addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
+        @Override public void onAfterCreated(CefBrowser browser) {
+          messaging = CefMessageRouter.create( ... );
+          client.addMessageRouter(messaging);
+        }
+      });
+    }
+</pre>
+
+<div id="Chromium Embedded Framework-Injecting JavaScript"><h2 id="Injecting JavaScript" class="header"><a href="#Chromium Embedded Framework-Injecting JavaScript">Injecting JavaScript</a></h2></div>
+
+<p>
+To be honest, the <code>window.cefQuery</code> mechanism isn't even that good or
+convenient to use in practical applications. Mainly because I don't want
+JavaScript on HTML pages to depend on one particular scenario when web view is
+opened in Chromium Embedded Framework. But also the fact, that only strings can
+be used for messaging, bothers me.
+</p>
+
+<p>
+Fortunately, Chromium has handy <code>CefBrowser.executeJavaScript</code> method.
+Method makes it possible to force browser to inject any sort of JavaScript into
+a page. The only issue with it: upon calling I have no idea which page is
+currently loaded in the browser.
+</p>
+
+<p>
+A little convention has to be introduced to sort it out: force <code>Browser</code> object
+internals to push a initializer action to a queue before calling <code>load</code>:
+</p>
+<pre java>
+  private interface LoaderCallback {
+    void onSuccess();
+    void onFailure();
+    LoaderCallback empty = new LoaderCallback() {
+      @Override public void onSuccess() {}
+      @Override public void onFailure() {}
+    }
+  }
+  public static final class Browser {
+    ...
+    private final LinkedList&lt;LoaderCallback&gt; loaderQueue = new LinkedList&lt;&gt;();
+
+    private Browser() {
+      ...
+      client.addLoadHandler(new CefLoadHandlerAdapter() {
+        @Override public void onLoadEnd(
+            CefBrowser browser,
+            CefFrame frame,
+            int httpStatusCode) {
+          super.onLoadEnd(browser, frame, httpStatusCode);
+          synchronized (Browser.this) {
+            LoaderCallback cb = loaderQueue.poll();
+            if (cb != null) cb.onSuccess();
+          }
+        }
+        @Override public void onLoadError(
+            CefBrowser browser,
+            CefFrame frame,
+            ErrorCode error,
+            String message,
+            String url) {
+          super.onLoadError(browser, frame, error, message, url);
+          synchronized (Browser.this) {
+            LoaderCallback cb = loaderQueue.poll();
+            if (cb != null) cb.onFailure();
+          }
+        }
+      });
+      // Page is rarely known at the moment of object construction,
+      // therefore push an empty loader action for about:blank;
+      loaderQueue.addLast(LoaderCallback.empty);
+      this.impl = client.createBrowser("about:blank", CefRendering.DEFAULT, false);
+      controllers.put(impl, new WeakReference&lt;&gt;(this));
+    }
+
+    private void installFunctionRouter() {
+      // TODO
+    }
+
+    public CompletableFuture&lt;?&gt; loadHTML(String html) {
+      final CompletableFuture&lt;?&gt; f = new CompletableFuture&lt;&gt;();
+      whenReady(() -&gt; {
+        this.data.set(new DataResourceHandler(html));
+        synchronized (Browser.this) {
+          loaderQueue.addLast(new LoaderCallback() {
+            @Override public void onSuccess() {
+              installFunctionRouter();
+              f.complete(null);
+            }
+            @Override public void onFailure() {
+              f.completeExceptionally(new RuntimeException());
+            }
+          });
+        }
+        impl.loadURL("data:");
+      });
+      return f;
+    }
+  }
+</pre>
+
+<p>
+That's an awful lot of code for something that should be trivial. It makes
+possible to guarantee that a specific JavaScript function router gets injected
+on every consequent page load.
+</p>
+
+<p>
+The main goal is to inject JavaScript functions that directly transform into
+calls to java code. In order to propagate message from JavaScript, first it
+should be compacted into a string. This can be done via packing the data with
+<code>JSON.stringify</code>, ensuring all primitive values can be red back on java side.
+Then unpacking response via <code>JSON.parse</code> on JavaScript side.
+</p>
+
+<p>
+Another improvement to facilitate transparency over built-in mechanism is to
+return a <code>Promise</code>. With that in mind, JavaScript function definition can be
+generalized:
+</p>
+<pre>
+function {% function_name %} (...args) {
+  return new Promise(function (resolve, reject) {
+    window.cefQuery({
+      persistent: false,
+      request: JSON.stringify({
+        func: '{% function_name %}'.
+        args: args
+      }),
+      onSuccess: function (response) {
+        resolve(JSON.parse(response));
+      },
+      onFailure: function (code, message) {
+        reject({code: code, message: message});
+      }
+    });
+  });
+}
+</pre>
+
+<p>
+Replace <code>{% function_name %}</code> with a valid identifier and JavaScript code is
+ready to be injected. Gluing it to java is bit more routine. Function
+calls should translate into method calls. Top level message passed to
+<code>window.cefQuery</code> should be de-serialized from JSON.
+</p>
+<pre java>
+final class RouterMessage {
+  String func;
+  ArrayList&lt;Object&gt; args;
+}
+
+public interface JsFunctionHandler {
+  JsFunctionOutcome invoke(ArrayList&lt;Object&gt; arguments);
+}
+
+final class JsFunction {
+  final String name;
+  final JsFunctionHandler handler;
+  JsFunction(String name, JsFunctionHandler handler) {
+    this.name = name;
+    this.handler = handler;
+  }
+}
+</pre>
+
+<p>
+The router is responsible for injecting functions and parsing queries. Routing
+messages then dispatched to instances of <code>JsFunctionHandler</code> interface.
+</p>
+<pre java>
+public final class JsFunctionRouter {
+  private static final ThreadLocal&lt;Gson&gt; JSON = ThreadLocal.withInitial(Gson::new);
+  private static final String JS_INTERNAL = "chromium-embed-js-function-router";
+  private static final String JS_INTERNAL_INIT = "chromium-embed-js-function-router-init";
+  private final ArrayList&lt;JsFunction&gt; functions;
+  private final HashMap&lt;String, JsFunction&gt; dispatcher;
+  private final @Nullable String initJs;
+  private JsFunctionHandler(ArrayList&lt;JsFunction&gt; functions, @Nullable String initJs) {
+    this.initJs = initJs;
+    this.functions = functions;
+    this.dispatcher = new HashMap&lt;&gt;(2 * functions.size());
+    for (JsFunction fn : functions) {
+      dispatcher.put(fn.name, fn);
+    }
+  }
+  void install(CefBrowser target) {
+    for (JsFunction fn : functions) {
+      target.executeJavaScript(generateJavascriptWrapper(fn.name), JS_INTERNAL, 0);
+    }
+    // Execute extra js to call functions informing page that external js is injected.
+    if (initJs != null) {
+      target.executeJavaScript(initJs, JS_INTERNAL_INIT, 0);
+    }
+  }
+  JsRouterOutcome handle(String request) {
+    Gson json = JSON.get();
+    RouterMessage message = json.fromJson(request, RouterMessage.class);
+    JsFunction fn = dispatcher.get(message.func);
+    if (fn == null) {
+      return JsRouterOutcome.UNDEFINED_FUNCTION;
+    } else try {
+      return fn.handler.invoke(message.args).handle(new JsFunctionOutcome.Handler&lt;JsRouterOutcome&gt;() {
+        @Override public JsRouterOutcome onResponse(@Nullable Object result) {
+          return JsRouterOutcome.success(json.toJson(result));
+        }
+        @Override public JsRouterOutcome onError(int code, @Nullable String message) {
+          return JsRouterOutcome.failure(code, message);
+        }
+      });
+    } catch (Throwable throwable) {
+      return JsRouterOutcome.failure(
+          JsRouterOutcome.E_JAVA_EXCEPTION,
+          throwable.getMessage());
+    }
+  }
+  private String generateJavascriptWrapper(String functionName) {
+    // Replace {% function_name %} in template with actual function name
+  }
+}
+</pre>
+
+<p>
+Missing class definition are just sum types carrying data for multiple outcomes:
+</p>
+<pre java>
+public abstract class JsFunctionOutcome {
+  private JsFunctionOutcome() {}
+
+  public interface Handler&lt;O&gt; {
+    O onResponse(@Nullable Object result);
+    O onError(int code, @Nullable String message);
+  }
+
+  public abstract &lt;O&gt; O handle(Handler&lt;O&gt; handler);
+
+  public static JsFunctionOutcome response(@Nullable Object result) { ... }
+
+  public static JsFunctionOutcome error(int code, @Nullable String message) { ... }
+}
+
+abstract class JsRouterOutcome {
+  private JsRouterOutcome() {}
+
+  public static final int E_UNDEFINED_FUNCTION = 0;
+  public static final int E_JAVA_EXCEPTION = 1;
+
+  public static final JsRouterOutcome UNDEFINED_FUNCTION =
+      failure(E_UNDEFINED_FUNCTION, "Function is not registered");
+
+  public interface Handler&lt;O&gt; {
+    O onSuccess(@Nullable String object);
+    O onFailure(int code, @Nullable String message);
+  }
+
+  public abstract &lt;O&gt; O handle(Handler&lt;O&gt; handler);
+
+  public static JsRouterOutcome success(@Nullable String result) { ... }
+
+  public static JsRouterOutcome failure(int code, @Nullable String message) { ... }
+}
+</pre>
+
+<p>
+Finishing touches would be instantiating a correct <code>CefMessageRouter</code> and
+injecting required functions;
+</p>
+<pre java>
+
+    private final AtomicReference&lt;JsFunctionRouter&gt; router = new AtomicReference&lt;&gt;();
+
+    private void installFunctionRouter() {
+      JsFunctionRouter router = Browser.this.router.get();
+      if (router != null) router.install(impl);
+    }
+
+    private Browser() {
+      ...
+      client.addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
+        @Override public void onAfterCreated(CefBrowser browser) {
+          super.onAfterCreated(browser);
+          messaging = CefMessageRouter.create(new CefMessageRouterHandlerAdapter() {
+            @Override
+            public boolean onQuery(
+                CefBrowser browser,
+                CefFrame frame,
+                long query,
+                String request,
+                boolean persistent,
+                CefQueryCallback callback) {
+
+                JsFunctionRouter router = Browser.this.router.get();
+                if (router == null) {
+                  return false;
+                } else return router.handle(request).handle(new JsRouterOutcome.Handler&lt;Boolean&gt;() {
+                  @Override public Boolean onSuccess(@Nullable String response) {
+                    callback.success(response);
+                    return true;
+                  }
+                  @Override public Boolean onFailure(int code, @Nullable String message) {
+                    callback.failure(code, message);
+                    return true;
+                  }
+                });
+            }
+        });
+          }
+      });
+    }
+</pre>
+
+<div id="Chromium Embedded Framework-Conclusion"><h2 id="Conclusion" class="header"><a href="#Chromium Embedded Framework-Conclusion">Conclusion</a></h2></div>
+
+<p>
+It's crazy how much code you have to write, test, debug, and troubleshoot
+before CEF even becomes remotely useful. The project is clearly an
+afterthought; providing lazy, unpolished and barely functioning software. And
+it's a product of a multi-billionaire company. The company that is supposed to
+hire the best of the best from the job market. What a joke.
+</p>
+
+<p>
+My disappointment is unmeasurable and my day is ruined. In fact my whole month
+is ruined, since I spent almost 3 full weeks working on this.
+</p>
+
+<p>
+Reference:
+</p>
+<ul>
+<li>
+<sup><small>[1]</small></sup> <a href="https://www.warp.dev/blog/problems-with-promotion-oriented-cultures">https://www.warp.dev/blog/problems-with-promotion-oriented-cultures</a>
+
+<li>
+<sup><small>[2]</small></sup> <a href="https://bitbucket.org/chromiumembedded/java-cef/src/master/">https://bitbucket.org/chromiumembedded/java-cef/src/master/</a>
+
+<li>
+<sup><small>[3]</small></sup> <a href="https://github.com/JetBrains/jcef">https://github.com/JetBrains/jcef</a>
+
+<li>
+<sup><small>[4]</small></sup> <a href="https://github.com/viglucci/app-jcef-example">https://github.com/viglucci/app-jcef-example</a>
+
+</ul>
+
+      </div>
+    </div>
+  </body>
+  <script>
+    document.querySelectorAll('pre').forEach(el => hljs.highlightElement(el));
+  </script>
+</html>
