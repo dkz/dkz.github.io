@@ -11,8 +11,8 @@
   <body>
     <div class="hero-image">
       <div class="hero-text">
-        <h1></h1>
-        <p></p>
+        <h1>Garbage Collector</h1>
+        <p>Okay, maybe it is not all garbage</p>
       </div>
     </div>
     <div class="flex-container">

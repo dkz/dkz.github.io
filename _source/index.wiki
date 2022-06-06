@@ -1,5 +1,7 @@
 %template index
 
+= General =
+
 - [[diary/diary|Personal diary index page]]
 
 = Useful Resources and Links =
