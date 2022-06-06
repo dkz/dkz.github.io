@@ -68,15 +68,8 @@ code {
     "Bitstream Vera Sans Mono",
     monospace;
 
-  -webkit-border-radius: 1px;
-  -moz-border-radius: 1px;
-  border-radius: 1px;
-  -moz-background-clip: padding;
-  -webkit-background-clip: padding-box;
-  background-clip: padding-box;
   padding: 0px 3px;
-  display: inline-block;
-  color: #52595d;
+  font-weight: bold;
   background-color: #f9f9f9;
 }
 
@@ -160,26 +153,10 @@ h6 {
   color: inherit;
 }
 
-li, ul, ol {
-  font-size: medium;
-}
-
-ul ul, ul ol, ol ol, ol ul, li {
-  margin-top: 0.8em;
-  margin-bottom: 0.8em;
-}
-
-ul {
-  margin-left: 2em;
-  padding-left: 0;
-}
-
-ul {
-  list-style: none;
-}
-
-ul li {
-  list-style-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>');
+li {
+  line-height: 1.5em;
+  margin-top: 1em;
+  margin-bottom: 1em;
 }
 
 ul ul li {
