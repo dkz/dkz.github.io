@@ -1,0 +1,99 @@
+= Java: Sum Types =
+
+Getting code manipulated by data in programming languages is a hassle. Evident
+by scarce palette of tools for the task: an if-branching operator and virtual
+method tables at most. Programmers tend to rely on the former more often and
+that's just the bad rule of habit.
+
+*Abuse polymorphism instead.*
+
+== Sum Types ==
+
+Types in programming languages have a notion of _product types_ and _sum types_.
+
+_Product types_ combine two or more types into one. Mathematical
+equivalent of which is Cartesian product. Example: point $(x, y)$ in a 2D space
+consist of two real numbers $x \in \mathbb R$ and $y \in \mathbb R$. Hence
+`Point` type is a product of two real number types,
+$(x, y) \in \mathbb R \times \mathbb R$.
+
+_Sum types_ combine two or more disjoint value types into one.
+`FunctionOutcome` type from the preface contains *either* a return value *or* a
+error code and message, never both at the same time.
+
+Product types are as trivial as mashing everything into a single class. Sum
+type encoding is what almost every programming language neglects. Switch over
+types (poor man's pattern matching) and sealed classes are available in java
+only 25 years after its initial release.
+
+== Encoding Sum Types ==
+
+Practically: how to indicate that function returns two or more mutually
+exclusive cases? One possible solution is to cram all data together into one
+class and forget about it:
+{{{java
+public final class FunctionOutcome {
+  public enum Type { RETURN, ERROR }
+  public Type type;
+  public int code;
+  public @Nullable String message;
+  public @Nullable Object result;
+}
+}}}
+
+In order to implement meaningful logic around instances of `FunctionOutcome`,
+it should be dispatched with a switch statement to access relevant fields.
+This procedure becomes a chore quickly.
+
+Source has no indication of which fields are relevant for each type.This
+oversimplified example has only 3 of them; what does happen if there are 10?
+Obviously, this approach doesn't scale.
+
+Answers to this^[1]^ Stackoverflow question are dangerously close to presenting
+a practical solution to sum types encoding, but they miss it.
+{{{java
+public abstract class FunctionOutcome {
+  private FunctionOutcome() {}
+
+  public interface Handler<O> {
+    O onReturn(@Nullable Object result);
+    O onError(int code, @Nullable String message);
+  }
+
+  public abstract <O> O handle(Handler<O> handler);
+
+  public static FunctionOutcome returing(@Nullable Object result) { ... }
+
+  public static FunctionOutcome error(int code, @Nullable String message) { ... }
+}
+}}}
+
+Private constructor makes it impossible to inherit the class outside of inner
+definitions, while handler interface lists all disjoint cases. The only
+downside is each case requiring a wrapper:
+{{{java
+  public static FunctionOutcome error(int code, @Nullable String message) {
+    return new ErrorCase(code, message);
+  }
+
+  private static final class ErrorCase extends FunctionOutcome {
+    private final int code;
+    private final @Nullable String message;
+    private ErrorCase(int code, @Nullable String message) {
+      this.code = code;
+      this.message = message;
+    }
+    @Override public <O> O handle(Handler<O> handler) {
+      return handler.onError(code, message);
+    }
+  }
+}}}
+
+This solution is longer, yet superior. `Handler` communicates disjoint cases in
+question, and since IDE completion takes care of most of the
+`outcome.handle(new Handler<>() { ... })` it's actually faster to type. As a
+bonus, compilation breaks when new cases are introduces, which is extremely
+helpful in real-world situations.
+
+Reference:
+  - ^[1]^ https://stackoverflow.com/questions/48143268/java-tagged-union-sum-types

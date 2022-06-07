@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&family=Calistoga&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="../style.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/github.min.css"/>
+    <script src="../js/highlight.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <title>2022-06-07</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="content">
+        
+<div id="Java: Sum Types"><h1 id="Java: Sum Types" class="header"><a href="#Java: Sum Types">Java: Sum Types</a></h1></div>
+
+<p>
+Getting code manipulated by data in programming languages is a hassle. Evident
+by scarce palette of tools for the task: an if-branching operator and virtual
+method tables at most. Programmers tend to rely on the former more often and
+that's just the bad rule of habit.
+</p>
+
+<p>
+<span id="Java: Sum Types-Abuse polymorphism instead."></span><strong id="Abuse polymorphism instead.">Abuse polymorphism instead.</strong>
+</p>
+
+<div id="Java: Sum Types-Sum Types"><h2 id="Sum Types" class="header"><a href="#Java: Sum Types-Sum Types">Sum Types</a></h2></div>
+
+<p>
+Types in programming languages have a notion of <em>product types</em> and <em>sum types</em>.
+</p>
+
+<p>
+<em>Product types</em> combine two or more types into one. Mathematical
+equivalent of which is Cartesian product. Example: point \((x, y)\) in a 2D space
+consist of two real numbers \(x \in \mathbb R\) and \(y \in \mathbb R\). Hence
+<code>Point</code> type is a product of two real number types,
+\((x, y) \in \mathbb R \times \mathbb R\).
+</p>
+
+<p>
+<em>Sum types</em> combine two or more disjoint value types into one.
+<code>FunctionOutcome</code> type from the preface contains <span id="Java: Sum Types-Sum Types-either"></span><strong id="either">either</strong> a return value <span id="Java: Sum Types-Sum Types-or"></span><strong id="or">or</strong> a
+error code and message, never both at the same time.
+</p>
+
+<p>
+Product types are as trivial as mashing everything into a single class. Sum
+type encoding is what almost every programming language neglects. Switch over
+types (poor man's pattern matching) and sealed classes are available in java
+only 25 years after its initial release.
+</p>
+
+<div id="Java: Sum Types-Encoding Sum Types"><h2 id="Encoding Sum Types" class="header"><a href="#Java: Sum Types-Encoding Sum Types">Encoding Sum Types</a></h2></div>
+
+<p>
+Practically: how to indicate that function returns two or more mutually
+exclusive cases? One possible solution is to cram all data together into one
+class and forget about it:
+</p>
+<pre java>
+public final class FunctionOutcome {
+  public enum Type { RETURN, ERROR }
+  public Type type;
+  public int code;
+  public @Nullable String message;
+  public @Nullable Object result;
+}
+</pre>
+
+<p>
+In order to implement meaningful logic around instances of <code>FunctionOutcome</code>,
+it should be dispatched with a switch statement to access relevant fields.
+This procedure becomes a chore quickly.
+</p>
+
+<p>
+Source has no indication of which fields are relevant for each type.This
+oversimplified example has only 3 of them; what does happen if there are 10?
+Obviously, this approach doesn't scale.
+</p>
+
+<p>
+Answers to this<sup><small>[1]</small></sup> Stackoverflow question are dangerously close to presenting
+a practical solution to sum types encoding, but they miss it.
+</p>
+<pre java>
+public abstract class FunctionOutcome {
+  private FunctionOutcome() {}
+
+  public interface Handler&lt;O&gt; {
+    O onReturn(@Nullable Object result);
+    O onError(int code, @Nullable String message);
+  }
+
+  public abstract &lt;O&gt; O handle(Handler&lt;O&gt; handler);
+
+  public static FunctionOutcome returing(@Nullable Object result) { ... }
+
+  public static FunctionOutcome error(int code, @Nullable String message) { ... }
+}
+</pre>
+
+<p>
+Private constructor makes it impossible to inherit the class outside of inner
+definitions, while handler interface lists all disjoint cases. The only
+downside is each case requiring a wrapper:
+</p>
+<pre java>
+  public static FunctionOutcome error(int code, @Nullable String message) {
+    return new ErrorCase(code, message);
+  }
+
+  private static final class ErrorCase extends FunctionOutcome {
+    private final int code;
+    private final @Nullable String message;
+    private ErrorCase(int code, @Nullable String message) {
+      this.code = code;
+      this.message = message;
+    }
+    @Override public &lt;O&gt; O handle(Handler&lt;O&gt; handler) {
+      return handler.onError(code, message);
+    }
+  }
+</pre>
+
+<p>
+This solution is longer, yet superior. <code>Handler</code> communicates disjoint cases in
+question, and since IDE completion takes care of most of the
+<code>outcome.handle(new Handler&lt;&gt;() { ... })</code> it's actually faster to type. As a
+bonus, compilation breaks when new cases are introduces, which is extremely
+helpful in real-world situations.
+</p>
+
+<p>
+Reference:
+</p>
+<ul>
+<li>
+<sup><small>[1]</small></sup> <a href="https://stackoverflow.com/questions/48143268/java-tagged-union-sum-types">https://stackoverflow.com/questions/48143268/java-tagged-union-sum-types</a>
+
+</ul>
+
+      </div>
+    </div>
+  </body>
+  <script>
+    document.querySelectorAll('pre').forEach(el => hljs.highlightElement(el));
+  </script>
+</html>
