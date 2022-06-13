@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&family=Calistoga&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="../style.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/github.min.css"/>
+    <script src="../js/highlight.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <title>2022-06-13</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="content">
+        
+<div id="ASCII Separators"><h1 id="ASCII Separators" class="header"><a href="#ASCII Separators">ASCII Separators</a></h1></div>
+
+<p>
+ASCII separator characters make parsing of tabular data trivial.
+</p>
+
+<p>
+CSV has been a bane of tabular data for many years. Primarily because it is
+awful for arbitrary data like results of SQL queries. Especially if it contains
+newlines, commas, and quotation marks.
+</p>
+
+<p>
+ASCII has these fancy non-printable characters that almost never appear in any
+textual data. Why aren't they used more often?
+</p>
+
+<table>
+<tr>
+<th>
+Code
+</th>
+<th>
+Role
+</th>
+</tr>
+<tr>
+<td>
+<code>0x1f</code>
+</td>
+<td>
+Unit separator
+</td>
+</tr>
+<tr>
+<td>
+<code>0x1e</code>
+</td>
+<td>
+Record separator
+</td>
+</tr>
+<tr>
+<td>
+<code>0x1c</code>
+</td>
+<td>
+File separator
+</td>
+</tr>
+</table>
+
+<p>
+PostgresQL client is customizable enough to output query results using
+non-orthodox field and record separators
+</p>
+
+<pre bash>
+  psql -q ${_connection_info} &lt;&lt; EOF &gt; activity.usrs
+    \pset format unaligned
+    \pset footer off
+    \pset fieldsep '\x1f'
+    \pset recordsep '\x1e'
+    \echo -n 'pg_stat_activity.usrs'
+    \echo -n '\x1c'
+    select * from pg_stat_activity;
+    \echo -n '\x1c'
+    \echo -n 'pg_locks.usrs'
+    \echo -n '\x1c'
+    select * from pg_locks;
+  EOF
+</pre>
+
+<p>
+Multiple tables can be saved into a single file thanks to file separator
+character. Later it can be parsed and examined with a simple Python script.
+</p>
+
+      </div>
+    </div>
+  </body>
+  <script>
+    document.querySelectorAll('pre').forEach(el => hljs.highlightElement(el));
+  </script>
+</html>

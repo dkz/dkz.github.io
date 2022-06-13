@@ -1,0 +1,38 @@
+= ASCII Separators =
+
+ASCII separator characters make parsing of tabular data trivial.
+
+CSV has been a bane of tabular data for many years. Primarily because it is
+awful for arbitrary data like results of SQL queries. Especially if it contains
+newlines, commas, and quotation marks.
+
+ASCII has these fancy non-printable characters that almost never appear in any
+textual data. Why aren't they used more often?
+
+| Code   | Role             |
+|--------|------------------|
+| `0x1f` | Unit separator   |
+| `0x1e` | Record separator |
+| `0x1c` | File separator   |
+
+PostgresQL client is customizable enough to output query results using
+non-orthodox field and record separators
+
+{{{bash
+  psql -q ${_connection_info} << EOF > activity.usrs
+    \pset format unaligned
+    \pset footer off
+    \pset fieldsep '\x1f'
+    \pset recordsep '\x1e'
+    \echo -n 'pg_stat_activity.usrs'
+    \echo -n '\x1c'
+    select * from pg_stat_activity;
+    \echo -n '\x1c'
+    \echo -n 'pg_locks.usrs'
+    \echo -n '\x1c'
+    select * from pg_locks;
+  EOF
+}}}
+
+Multiple tables can be saved into a single file thanks to file separator
+character. Later it can be parsed and examined with a simple Python script.
