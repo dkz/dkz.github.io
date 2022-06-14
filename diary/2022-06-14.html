@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&family=Calistoga&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="../style.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/github.min.css"/>
+    <script src="../js/highlight.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <title>2022-06-14</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="content">
+        
+<div id="ASCII Separators: Parsing"><h1 id="ASCII Separators: Parsing" class="header"><a href="#ASCII Separators: Parsing">ASCII Separators: Parsing</a></h1></div>
+
+<p>
+I instruct Postgres to execute a series of queries and store records into a
+text file. But this time using <code>0x1c</code> to split query names and record data,
+<code>0x1e</code> as the record separator and <code>0x1f</code> as the field separator.  Later, these
+files can be traversed with a help of a compact Python3 script.
+</p>
+
+<p>
+Python3 provides <code>seek</code> and <code>read</code> methods for files. Seek-ability is
+particularly useful for large files, since storing all records in memory is not
+practical for large files. Below I'm assuming the file descriptor stays open,
+because <code>seek</code> and <code>read</code> will be paired with python generators.
+</p>
+
+<p>
+Quickly scan through the file and find locations of separators:
+</p>
+
+<pre python>
+def lookup_file_separators(fd, bs=4096):
+    position = 0
+    while True:
+        fd.seek(position)
+        buf = fd.read(bs)
+        if not buf:
+            break
+        sections = buf.split('\x1c')
+        while sections:
+            section = sections.pop(0)
+            position += len(section)
+            if sections:
+                yield position
+                position += 1
+    yield position
+</pre>
+
+<p>
+When locations are known, file can be split into sections.
+</p>
+
+<p>
+Each file section has a starting position and length within <code>fd</code>. To avoid
+accessing <code>fd</code> directly, each section comes with a <code>.stream()</code> method,
+generating string contents of the section.
+</p>
+
+<pre python>
+class Section:
+    def __init__(self, fd, start, length):
+        self.fd = fd
+        self.start = start
+        self.length = length
+    def stream(self, bs=4096):
+        position = 0
+        while position &lt; self.length:
+            self.fd.seek(self.start + position)
+            readsize = min(bs, self.length - position)
+            yield self.fd.read(readsize)
+            position += readsize
+
+def lookup_file_sections(fd, bs=4096):
+    position = 0
+    for separator in lookup_file_separators(fd, bs):
+        yield Section(fd, position, separator - position)
+        position = 1 + separator
+</pre>
+
+<p>
+I store query names in odd sections and <code>0x1e</code>/<code>0x1f</code> separated query result
+records in even sections. Thus, two consecutive sections form a named table.
+</p>
+
+<pre python>
+class UsRs:
+    def __init__(self, fd, name, section, bs=4096):
+        self.fd = fd
+        self.name = name
+        self.section = section
+        self.bs = bs
+    @staticmethod
+    def read(fd, bs=4096):
+        usrs = {}
+        sections = list(lookup_file_sections(fd, bs))
+        while sections:
+            name_section = sections.pop(0)
+            if sections:
+                content = sections.pop(0)
+                name = ''.join(name_section.stream())
+                usrs[name] = UsRs(fd, name, content)
+        return usrs
+    def stream(self):
+        chunk = []
+        for buf in self.section.stream(self.bs):
+            while '\x1e' in buf:
+                [last, buf] = buf.split('\x1e', 1)
+                yield ''.join([*chunk, last]).split('\x1f')
+                chunk = []
+            chunk.append(buf)
+</pre>
+
+<p>
+Table stores records and fields separated with ASCII unit-separator and
+record-separator, hence the name <code>UsRs</code>.
+</p>
+
+<p>
+Records are small enough to fit in-memory. So the underlying <code>section.stream()</code>
+is transformed by more specific implementation that splits stream into records
+and fields.
+</p>
+
+<p>
+That is the complete parser and it is only 60 LOC in Python3.
+</p>
+
+      </div>
+    </div>
+  </body>
+  <script>
+    document.querySelectorAll('pre').forEach(el => hljs.highlightElement(el));
+  </script>
+</html>

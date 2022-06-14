@@ -1,0 +1,98 @@
+= ASCII Separators: Parsing  =
+
+I instruct Postgres to execute a series of queries and store records into a
+text file. But this time using `0x1c` to split query names and record data,
+`0x1e` as the record separator and `0x1f` as the field separator.  Later, these
+files can be traversed with a help of a compact Python3 script.
+
+Python3 provides `seek` and `read` methods for files. Seek-ability is
+particularly useful for large files, since storing all records in memory is not
+practical for large files. Below I'm assuming the file descriptor stays open,
+because `seek` and `read` will be paired with python generators.
+
+Quickly scan through the file and find locations of separators:
+
+{{{python
+def lookup_file_separators(fd, bs=4096):
+    position = 0
+    while True:
+        fd.seek(position)
+        buf = fd.read(bs)
+        if not buf:
+            break
+        sections = buf.split('\x1c')
+        while sections:
+            section = sections.pop(0)
+            position += len(section)
+            if sections:
+                yield position
+                position += 1
+    yield position
+}}}
+
+When locations are known, file can be split into sections.
+
+Each file section has a starting position and length within `fd`. To avoid
+accessing `fd` directly, each section comes with a `.stream()` method,
+generating string contents of the section.
+
+{{{python
+class Section:
+    def __init__(self, fd, start, length):
+        self.fd = fd
+        self.start = start
+        self.length = length
+    def stream(self, bs=4096):
+        position = 0
+        while position < self.length:
+            self.fd.seek(self.start + position)
+            readsize = min(bs, self.length - position)
+            yield self.fd.read(readsize)
+            position += readsize
+
+def lookup_file_sections(fd, bs=4096):
+    position = 0
+    for separator in lookup_file_separators(fd, bs):
+        yield Section(fd, position, separator - position)
+        position = 1 + separator
+}}}
+
+I store query names in odd sections and `0x1e`/`0x1f` separated query result
+records in even sections. Thus, two consecutive sections form a named table.
+
+{{{python
+class UsRs:
+    def __init__(self, fd, name, section, bs=4096):
+        self.fd = fd
+        self.name = name
+        self.section = section
+        self.bs = bs
+    @staticmethod
+    def read(fd, bs=4096):
+        usrs = {}
+        sections = list(lookup_file_sections(fd, bs))
+        while sections:
+            name_section = sections.pop(0)
+            if sections:
+                content = sections.pop(0)
+                name = ''.join(name_section.stream())
+                usrs[name] = UsRs(fd, name, content)
+        return usrs
+    def stream(self):
+        chunk = []
+        for buf in self.section.stream(self.bs):
+            while '\x1e' in buf:
+                [last, buf] = buf.split('\x1e', 1)
+                yield ''.join([*chunk, last]).split('\x1f')
+                chunk = []
+            chunk.append(buf)
+}}}
+
+Table stores records and fields separated with ASCII unit-separator and
+record-separator, hence the name `UsRs`.
+
+Records are small enough to fit in-memory. So the underlying `section.stream()`
+is transformed by more specific implementation that splits stream into records
+and fields.
+
+That is the complete parser and it is only 60 LOC in Python3.
