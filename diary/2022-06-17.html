@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&family=Calistoga&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="../style.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/github.min.css"/>
+    <script src="../js/highlight.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <title>2022-06-17</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="content">
+        
+<div id="Tools to Improve Writing"><h1 id="Tools to Improve Writing" class="header"><a href="#Tools to Improve Writing">Tools to Improve Writing</a></h1></div>
+
+<p>
+I was using thesaurus.com for a long time to better my writing. Primarily to
+spice it with more colorful passages, or make it generally more conforming. In
+all honesty, formal English makes me struggle; it takes me hours to write a
+business email or a letter.
+</p>
+
+<p>
+To my surprise, that annoying site can be avoided altogether.
+Ubuntu's apt repository publishes <code>wordnet</code>, extraordinary powerful lexical
+database; and <code>dict-gcide</code>, allegedly the best English dictionary<sup><small>[1]</small></sup>.
+</p>
+
+<pre>
+  sudo apt install wordnet dict-gcide
+</pre>
+
+<p>
+According to Michael A. Covington's advice, it is important to not use words if
+you don't know what they mean <sup><small>[2]</small></sup>. Now if I am not confident in an exact
+sense of the word at hand, <code>wordnet</code> and the dictionary provide tremendous
+assistance in the matter. <code>dict [word]</code> presents a comprehensive definition
+with a lot of examples, and <code>wn [word] -over</code> gives an overview of synonym
+rings.
+</p>
+
+<hr />
+<p>
+Reference:
+</p>
+
+<ol>
+<li>
+<a href="https://jsomers.net/blog/dictionary">https://jsomers.net/blog/dictionary</a>
+
+<li>
+<a href="http://www.covingtoninnovations.com/mc/WriteThinkLearn.pdf">http://www.covingtoninnovations.com/mc/WriteThinkLearn.pdf</a>
+
+</ol>
+
+      </div>
+    </div>
+  </body>
+  <script>
+    document.querySelectorAll('pre').forEach(el => hljs.highlightElement(el));
+  </script>
+</html>

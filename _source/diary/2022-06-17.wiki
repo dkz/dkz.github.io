@@ -1,0 +1,27 @@
+= Tools to Improve Writing =
+
+I was using thesaurus.com for a long time to better my writing. Primarily to
+spice it with more colorful passages, or make it generally more conforming. In
+all honesty, formal English makes me struggle; it takes me hours to write a
+business email or a letter.
+
+To my surprise, that annoying site can be avoided altogether.
+Ubuntu's apt repository publishes `wordnet`, extraordinary powerful lexical
+database; and `dict-gcide`, allegedly the best English dictionary^[1]^.
+
+{{{
+  sudo apt install wordnet dict-gcide
+}}}
+
+According to Michael A. Covington's advice, it is important to not use words if
+you don't know what they mean ^[2]^. Now if I am not confident in an exact
+sense of the word at hand, `wordnet` and the dictionary provide tremendous
+assistance in the matter. `dict [word]` presents a comprehensive definition
+with a lot of examples, and `wn [word] -over` gives an overview of synonym
+rings.
+
+----
+Reference:
+
+# https://jsomers.net/blog/dictionary
+# http://www.covingtoninnovations.com/mc/WriteThinkLearn.pdf
