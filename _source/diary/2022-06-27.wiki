@@ -1,0 +1,51 @@
+= Explaining Code using ASCII Art =
+
+A quote^[1]^:
+
+    People tend to be visual: we use pictures to understand problems.
+    Mainstream programming languages, on the other hand, operate in an almost
+    completely different kind of abstract space, leaving a big gap between
+    programs and pictures.
+
+I decided to check out tools which may help with visualizing graphs or
+structures. And found this tool^[2]^, which is written in Perl. Here's how to
+install it:
+
+{{{
+apt install libgraph-easy-perl
+}}}
+
+It follows Graphviz dot language format^[3]^:
+
+{{{
+digraph {
+  rankdir = RL;
+  A -> B [label="text"];
+  B -> C;
+  A -> C;
+  E -> C;
+  E -> A;
+}
+}}}
+
+And it can be rendered as box-art graph directly in VIM.
+Simple as `:!graph-easy --as boxart`.
+
+{{{
+
+  ┌───────────────────────┐
+  ▼                       │
+┌───┐     ┌───┐  text   ┌───┐     ┌───┐
+│ C │ ◀── │ B │ ◀────── │ A │ ◀── │ E │
+└───┘     └───┘         └───┘     └───┘
+  ▲                                 │
+  └─────────────────────────────────┘
+}}}
+
+----
+
+Reference:
+
+# https://blog.regehr.org/archives/1653
+# https://github.com/ironcamel/Graph-Easy
+# https://graphviz.org/

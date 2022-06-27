@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&family=Calistoga&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="../style.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/github.min.css"/>
+    <script src="../js/highlight.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <title>2022-06-27</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="content">
+        
+<div id="Explaining Code using ASCII Art"><h1 id="Explaining Code using ASCII Art" class="header"><a href="#Explaining Code using ASCII Art">Explaining Code using ASCII Art</a></h1></div>
+
+<p>
+A quote<sup><small>[1]</small></sup>:
+</p>
+<blockquote>
+People tend to be visual: we use pictures to understand problems.
+Mainstream programming languages, on the other hand, operate in an almost
+completely different kind of abstract space, leaving a big gap between
+programs and pictures.
+</blockquote>
+
+<p>
+I decided to check out tools which may help with visualizing graphs or
+structures. And found this tool<sup><small>[2]</small></sup>, which is written in Perl. Here's how to
+install it:
+</p>
+
+<pre>
+apt install libgraph-easy-perl
+</pre>
+
+<p>
+It follows Graphviz dot language format<sup><small>[3]</small></sup>:
+</p>
+
+<pre>
+digraph {
+  rankdir = RL;
+  A -&gt; B [label="text"];
+  B -&gt; C;
+  A -&gt; C;
+  E -&gt; C;
+  E -&gt; A;
+}
+</pre>
+
+<p>
+And it can be rendered as box-art graph directly in VIM.
+Simple as <code>:!graph-easy --as boxart</code>.
+</p>
+
+<pre>
+
+  ┌───────────────────────┐
+  ▼                       │
+┌───┐     ┌───┐  text   ┌───┐     ┌───┐
+│ C │ ◀── │ B │ ◀────── │ A │ ◀── │ E │
+└───┘     └───┘         └───┘     └───┘
+  ▲                                 │
+  └─────────────────────────────────┘
+</pre>
+
+<hr />
+
+<p>
+Reference:
+</p>
+
+<ol>
+<li>
+<a href="https://blog.regehr.org/archives/1653">https://blog.regehr.org/archives/1653</a>
+
+<li>
+<a href="https://github.com/ironcamel/Graph-Easy">https://github.com/ironcamel/Graph-Easy</a>
+
+<li>
+<a href="https://graphviz.org/">https://graphviz.org/</a>
+
+</ol>
+
+      </div>
+    </div>
+  </body>
+  <script>
+    document.querySelectorAll('pre').forEach(el => hljs.highlightElement(el));
+  </script>
+</html>
