@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&family=Calistoga&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="../style.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/github.min.css"/>
+    <script src="../js/highlight.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <title>2022-06-28</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="content">
+        
+<div id="Note on Vim Plugins"><h1 id="Note on Vim Plugins" class="header"><a href="#Note on Vim Plugins">Note on Vim Plugins</a></h1></div>
+
+<p>
+I was a proponent of minimal vim setup.
+My <code>vimrc</code> file is barely over 100 lines, and remains the same,
+because I tend to install it on production environments.
+The core vim features are rather powerful,
+although it did not save me from installing tons of plugins.
+This page will keep them documented.
+</p>
+
+<div id="Note on Vim Plugins-Color schemes"><h2 id="Color schemes" class="header"><a href="#Note on Vim Plugins-Color schemes">Color schemes</a></h2></div>
+<pre>
+  Plugin 'flazz/vim-colorschemes'
+  Plugin 'challenger-deep-theme/vim'
+  Plugin 'drewtempelmeyer/palenight.vim'
+  Plugin 'rakr/vim-one'
+</pre>
+
+<p>
+I prefer <code>challenger-deep-theme</code> nowadays.
+</p>
+
+<div id="Note on Vim Plugins-Airline"><h2 id="Airline" class="header"><a href="#Note on Vim Plugins-Airline">Airline</a></h2></div>
+<pre>
+  Plugin 'vim-airline/vim-airline'
+  Plugin 'vim-airline/vim-airline-themes'
+</pre>
+
+<p>
+Airline has a decent status-line and integration with Syntastic out of the box.
+My tweaks only disable Unicode symbols and add current working directory to the status-line.
+</p>
+
+<pre>
+  let g:airline_theme='badwolf'
+  let g:airline_section_c='%&lt;%f%m (%{getcwd()})'
+  let g:airline_symbols_ascii = 1
+</pre>
+
+<div id="Note on Vim Plugins-Syntastic"><h2 id="Syntastic" class="header"><a href="#Note on Vim Plugins-Syntastic">Syntastic</a></h2></div>
+<pre>
+  Plugin 'scrooloose/syntastic'
+</pre>
+
+<p>
+Syntastic is convenient for bash and python scripts given <code>pylint</code> and <code>shellcheck</code> are installed.
+Even although <code>pylint</code> is rather useless because majority of PEP is opinionated garbage.
+Anyway, their page states that defaults are not particularly well suitable for new users.
+I copied their recommended settings, since it does not clash with other plugins:
+</p>
+
+<pre>
+let g:syntastic_python_checkers = ['pylint']
+let g:syntastic_sh_checkers = ['shellcheck']
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+let g:syntastic_always_populate_loc_list = 1
+</pre>
+
+<div id="Note on Vim Plugins-FZF Integration"><h2 id="FZF Integration" class="header"><a href="#Note on Vim Plugins-FZF Integration">FZF Integration</a></h2></div>
+<pre>
+  Plugin 'junegunn/fzf'
+  Plugin 'junegunn/fzf.vim'
+</pre>
+
+<p>
+<code>fzf</code> is a CLI fuzzy finder, very useful one.
+Vim integration enables search in buffer list, files, and buffer contents.
+</p>
+
+<pre>
+  nnoremap &lt;Leader&gt;F :Files .&lt;CR&gt;
+  nnoremap &lt;Leader&gt;B :Buffers&lt;CR&gt;
+  nnoremap &lt;Leader&gt;L :Lines&lt;CR&gt;
+</pre>
+
+
+<div id="Note on Vim Plugins-Gitgutter"><h2 id="Gitgutter" class="header"><a href="#Note on Vim Plugins-Gitgutter">Gitgutter</a></h2></div>
+<pre>
+  Plugin 'airblade/vim-gitgutter'
+</pre>
+
+<div id="Note on Vim Plugins-Language Extensions"><h2 id="Language Extensions" class="header"><a href="#Note on Vim Plugins-Language Extensions">Language Extensions</a></h2></div>
+<pre>
+  Plugin 'vimwiki/vimwiki'
+  Plugin 'plasticboy/vim-markdown'
+  Plugin 'sheerun/vim-polyglot'
+</pre>
+
+<div id="Note on Vim Plugins-Lisp Editing"><h2 id="Lisp Editing" class="header"><a href="#Note on Vim Plugins-Lisp Editing">Lisp Editing</a></h2></div>
+<pre>
+  Plugin 'guns/vim-sexp'
+  Plugin 'tpope/vim-sexp-mappings-for-regular-people'
+</pre>
+
+      </div>
+    </div>
+  </body>
+  <script>
+    document.querySelectorAll('pre').forEach(el => hljs.highlightElement(el));
+  </script>
+</html>

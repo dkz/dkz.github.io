@@ -1,0 +1,86 @@
+= Note on Vim Plugins =
+
+I was a proponent of minimal vim setup.
+My `vimrc` file is barely over 100 lines, and remains the same,
+because I tend to install it on production environments.
+The core vim features are rather powerful,
+although it did not save me from installing tons of plugins.
+This page will keep them documented.
+
+== Color schemes ==
+{{{
+  Plugin 'flazz/vim-colorschemes'
+  Plugin 'challenger-deep-theme/vim'
+  Plugin 'drewtempelmeyer/palenight.vim'
+  Plugin 'rakr/vim-one'
+}}}
+
+I prefer `challenger-deep-theme` nowadays.
+
+== Airline ==
+{{{
+  Plugin 'vim-airline/vim-airline'
+  Plugin 'vim-airline/vim-airline-themes'
+}}}
+
+Airline has a decent status-line and integration with Syntastic out of the box.
+My tweaks only disable Unicode symbols and add current working directory to the status-line.
+
+{{{
+  let g:airline_theme='badwolf'
+  let g:airline_section_c='%<%f%m (%{getcwd()})'
+  let g:airline_symbols_ascii = 1
+}}}
+
+== Syntastic ==
+{{{
+  Plugin 'scrooloose/syntastic'
+}}}
+
+Syntastic is convenient for bash and python scripts given `pylint` and `shellcheck` are installed.
+Even although `pylint` is rather useless because majority of PEP is opinionated garbage.
+Anyway, their page states that defaults are not particularly well suitable for new users.
+I copied their recommended settings, since it does not clash with other plugins:
+
+{{{
+let g:syntastic_python_checkers = ['pylint']
+let g:syntastic_sh_checkers = ['shellcheck']
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+let g:syntastic_always_populate_loc_list = 1
+}}}
+
+== FZF Integration ==
+{{{
+  Plugin 'junegunn/fzf'
+  Plugin 'junegunn/fzf.vim'
+}}}
+
+`fzf` is a CLI fuzzy finder, very useful one.
+Vim integration enables search in buffer list, files, and buffer contents.
+
+{{{
+  nnoremap <Leader>F :Files .<CR>
+  nnoremap <Leader>B :Buffers<CR>
+  nnoremap <Leader>L :Lines<CR>
+}}}
+
+
+== Gitgutter ==
+{{{
+  Plugin 'airblade/vim-gitgutter'
+}}}
+
+== Language Extensions ==
+{{{
+  Plugin 'vimwiki/vimwiki'
+  Plugin 'plasticboy/vim-markdown'
+  Plugin 'sheerun/vim-polyglot'
+}}}
+
+== Lisp Editing ==
+{{{
+  Plugin 'guns/vim-sexp'
+  Plugin 'tpope/vim-sexp-mappings-for-regular-people'
+}}}

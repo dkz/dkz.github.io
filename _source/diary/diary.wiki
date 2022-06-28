@@ -2,6 +2,7 @@
 == 2022 ==
 
 === June ===
+  - [[2022-06-28|Note on Vim Plugins]]
   - [[2022-06-27|Explaining Code using ASCII Art]]
   - [[2022-06-17|Tools to Improve Writing]]
   - [[2022-06-14|ASCII Separators: Parsing]]
