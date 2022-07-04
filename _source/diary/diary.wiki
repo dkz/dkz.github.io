@@ -1,6 +1,9 @@
 = Diary =
 == 2022 ==
 
+=== July ===
+  - [[2022-07-04|MOTDs, Runbooks and Cheatsheets]]
+
 === June ===
   - [[2022-06-28|Note on Vim Plugins]]
   - [[2022-06-27|Explaining Code using ASCII Art]]

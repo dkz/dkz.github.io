@@ -1,0 +1,28 @@
+= MOTDs, Runbooks and Cheatsheets =
+
+Working on automation for small-to-medium size businesses,
+chances are high your infrastructure is not homogeneous.
+And each individual deployment is a bit of a mess.
+Customers are more important than others.
+Some have barely any load.
+Some, on the opposite, scrupulously monitored.
+
+Then, there's evolution of company practices.
+Half of the deployments were orchestrated by Ansible.
+Others were deployed manually.
+Few machines still run on Ubuntu 18.04.
+Few still have SysV style init.
+The list of differences goes on and on.
+
+The issue: each deployment is unique,
+each incident requires extra time to grasp the differences before reacting.
+
+Today's HN submission^[1]^ touches that topic a bit.
+I might borrow an idea of having a runbook on a server.
+Altogether with modified MOTD containing a cheatsheet and brief description of the deployment.
+
+----
+
+Reference:
+
+# https://www.cortex.io/post/keep-calm-and-use-the-runbook

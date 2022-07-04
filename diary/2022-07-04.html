@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&family=Calistoga&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="../style.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/github.min.css"/>
+    <script src="../js/highlight.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <title>2022-07-04</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="content">
+        
+<div id="MOTDs, Runbooks and Cheatsheets"><h1 id="MOTDs, Runbooks and Cheatsheets" class="header"><a href="#MOTDs, Runbooks and Cheatsheets">MOTDs, Runbooks and Cheatsheets</a></h1></div>
+
+<p>
+Working on automation for small-to-medium size businesses,
+chances are high your infrastructure is not homogeneous.
+And each individual deployment is a bit of a mess.
+Customers are more important than others.
+Some have barely any load.
+Some, on the opposite, scrupulously monitored.
+</p>
+
+<p>
+Then, there's evolution of company practices.
+Half of the deployments were orchestrated by Ansible.
+Others were deployed manually.
+Few machines still run on Ubuntu 18.04.
+Few still have SysV style init.
+The list of differences goes on and on.
+</p>
+
+<p>
+The issue: each deployment is unique,
+each incident requires extra time to grasp the differences before reacting.
+</p>
+
+<p>
+Today's HN submission<sup><small>[1]</small></sup> touches that topic a bit.
+I might borrow an idea of having a runbook on a server.
+Altogether with modified MOTD containing a cheatsheet and brief description of the deployment.
+</p>
+
+<hr />
+
+<p>
+Reference:
+</p>
+
+<ol>
+<li>
+<a href="https://www.cortex.io/post/keep-calm-and-use-the-runbook">https://www.cortex.io/post/keep-calm-and-use-the-runbook</a>
+
+</ol>
+
+      </div>
+    </div>
+  </body>
+  <script>
+    document.querySelectorAll('pre').forEach(el => hljs.highlightElement(el));
+  </script>
+</html>
